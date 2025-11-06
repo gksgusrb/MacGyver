@@ -29,3 +29,15 @@ package com.sbs.tutorial.config 에서 FakeRedisConfig 파일을 만들어 인�
 EmailService 에 Map을 사용하였다 (이메일이라는 키에 인증번호라는벨류 설정)
 또한 로컬과 나중에 도커Redis를 사용하기 위해 if문으로 구분했다
 AuthService 에서도 로컬과 도커를 분리했다 (로컬로 사용하면 자동으로 벨류를 제거하는 기능구현)
+
+로컬로 설정한후 실행했지만 서버가 실행안됨
+build.gradle 에 runtimeOnly 'com.h2database:h2' 의존성 주입하라는 정보 -> 실행되는것을 확인함
+
+Postman 으로 POST 로 설정하고 http://localhost:8080/api/auth/send-code?email=나의 이메일@gmail.com 보냄
+401 오류 = 찾아보니Spring Security는 기본적으로 로그인해야만 API 사용 가능 으로 설정함 그래서 풀어줘야함
+app1/config/SecurityConfig.java 를 추가하고 거기에서 해제
+이후 정상적으로 메일이 전달되는것을 확인
+
+http://localhost:8080/api/auth/verify?email=이메일6079@gmail.com&username=원하는이름&code=인증번호
+500 오류 = 프로그램 내부 문제
+정확히 입력했지만 "인증번호가 만료되었거나 존재하지 않습니다." 반환
