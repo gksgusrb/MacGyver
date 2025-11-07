@@ -1,6 +1,6 @@
-package com.sbs.tutorial.app1.authcontroller;
+package com.sbs.tutorial.app1.auth.authcontroller;
 
-import com.sbs.tutorial.app1.authservice.AuthService;
+import com.sbs.tutorial.app1.auth.authservice.AuthService;
 import com.sbs.tutorial.app1.emailservice.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
