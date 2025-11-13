@@ -1,4 +1,4 @@
-package com.sbs.tutorial.app1.auth.authservice;
+package com.sbs.tutorial.app1.auth.service;
 
 import com.sbs.tutorial.app1.user.User;
 import com.sbs.tutorial.app1.user.UserRepository;
@@ -17,15 +17,18 @@ public class AuthService {
     private final Map<String, String> fakeRedisStorage; //로컬
 
     public void verifyCodeAndRegister(String email, String username, String inputCode) {
+        String cleanEmail = email.trim();
+
+       // System.out.println(" 현재 fakeRedisStorage = " + fakeRedisStorage);
+      //  System.out.println(" map.get() 결과 = " + fakeRedisStorage.get("verify:" + cleanEmail));
 
         String savedCode = null;
 //savedCode 를 널로 설정하고 if문으로 가져옴
         if (fakeRedisStorage != null) {
-            String cleanEmail = email.trim();
-           savedCode = fakeRedisStorage.get("verify:" + cleanEmail);
+            savedCode = fakeRedisStorage.get("verify:" + cleanEmail);
         } else {
-           // prod: Redis에서 꺼냄
-          savedCode = redisTemplate.opsForValue().get("verify:" + email);
+            // prod: Redis에서 꺼냄
+            savedCode = redisTemplate.opsForValue().get("verify:" + email);
         }
 
         if (savedCode == null) {
@@ -50,7 +53,34 @@ public class AuthService {
         } else if (redisTemplate != null) {
             redisTemplate.delete("verify:" + email);
         }
-
-
     }
+    public User logincode(String email,String inputCode) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("없는 이메일입니다"));
+
+        String savedCode;
+        if (fakeRedisStorage != null) {
+            savedCode = fakeRedisStorage.get("login:" + email);
+        } else {
+            // prod: Redis에서 꺼냄
+            savedCode = redisTemplate.opsForValue().get("login:" + email);
+        }
+
+        if (savedCode == null) {
+            throw new RuntimeException("인증번호가 만료되었거나 존재하지 않습니다.");
+        }
+        if (!savedCode.equals(inputCode)) {
+            throw new RuntimeException("인증번호가 일치하지 않습니다.");
+        }
+
+
+        if (fakeRedisStorage != null) {
+            fakeRedisStorage.remove("login:" + email);
+        } else if (redisTemplate != null) {
+            redisTemplate.delete("login:" + email);
+        }
+        return user;
+    }
+
 }

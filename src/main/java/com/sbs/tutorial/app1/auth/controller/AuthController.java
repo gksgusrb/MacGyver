@@ -1,7 +1,8 @@
-package com.sbs.tutorial.app1.auth.authcontroller;
+package com.sbs.tutorial.app1.auth.controller;
 
-import com.sbs.tutorial.app1.auth.authservice.AuthService;
-import com.sbs.tutorial.app1.emailservice.EmailService;
+import com.sbs.tutorial.app1.auth.service.AuthService;
+import com.sbs.tutorial.app1.email.service.EmailService;
+import com.sbs.tutorial.app1.user.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,5 +32,18 @@ public class AuthController {
 
         authService.verifyCodeAndRegister(email, username, code);
         return ResponseEntity.ok("회원가입이 완료되었습니다.");
+    }
+    @PostMapping("/login/send-code")
+    public ResponseEntity<String> sendloginCode(@RequestParam String email) {
+        emailService.sendloginCode(email);
+        return ResponseEntity.ok(" 로그인 인증번호가 이메일로 발송되었습니다");
+    }
+    @PostMapping("/login/verify")
+    public ResponseEntity<String> verifylogin(
+            @RequestParam String email,
+            @RequestParam String code) {
+
+        User user = authService.logincode(email, code);
+        return ResponseEntity.ok("환영합니다.");
     }
 }
