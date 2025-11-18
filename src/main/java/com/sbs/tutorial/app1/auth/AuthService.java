@@ -1,11 +1,16 @@
-package com.sbs.tutorial.app1.auth.service;
+package com.sbs.tutorial.app1.auth;
 
 import com.sbs.tutorial.app1.user.User;
 import com.sbs.tutorial.app1.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -17,7 +22,7 @@ public class AuthService {
     private final Map<String, String> fakeRedisStorage; //로컬
 
     public void verifyCodeAndRegister(String email, String username, String inputCode) {
-        String cleanEmail = email.trim();
+        String cleanEmail = email.trim();// 코드 사용 1번만했음 그래서 전부 적용함
 
        // System.out.println(" 현재 fakeRedisStorage = " + fakeRedisStorage);
       //  System.out.println(" map.get() 결과 = " + fakeRedisStorage.get("verify:" + cleanEmail));
@@ -28,7 +33,7 @@ public class AuthService {
             savedCode = fakeRedisStorage.get("verify:" + cleanEmail);
         } else {
             // prod: Redis에서 꺼냄
-            savedCode = redisTemplate.opsForValue().get("verify:" + email);
+            savedCode = redisTemplate.opsForValue().get("verify:" + cleanEmail);
         }
 
         if (savedCode == null) {
@@ -38,33 +43,33 @@ public class AuthService {
             throw new RuntimeException("인증번호가 일치하지 않습니다.");
         }
 
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(cleanEmail)) {
             throw new RuntimeException("이미 가입된 이메일입니다.");
         }
         User user = User.builder()
-                .email(email)
+                .email(cleanEmail)
                 .username(username)
                 .verified(true)
                 .build();
         userRepository.save(user);
 
         if (fakeRedisStorage != null) {
-            fakeRedisStorage.remove("verify:" + email);
+            fakeRedisStorage.remove("verify:" + cleanEmail);
         } else if (redisTemplate != null) {
-            redisTemplate.delete("verify:" + email);
+            redisTemplate.delete("verify:" + cleanEmail);
         }
     }
     public User logincode(String email,String inputCode) {
-
-        User user = userRepository.findByEmail(email)
+        String cleanEmail = email.trim();
+        User user = userRepository.findByEmail(cleanEmail)
                 .orElseThrow(() -> new RuntimeException("없는 이메일입니다"));
 
         String savedCode;
         if (fakeRedisStorage != null) {
-            savedCode = fakeRedisStorage.get("login:" + email);
+            savedCode = fakeRedisStorage.get("login:" + cleanEmail);
         } else {
             // prod: Redis에서 꺼냄
-            savedCode = redisTemplate.opsForValue().get("login:" + email);
+            savedCode = redisTemplate.opsForValue().get("login:" + cleanEmail);
         }
 
         if (savedCode == null) {
@@ -74,11 +79,18 @@ public class AuthService {
             throw new RuntimeException("인증번호가 일치하지 않습니다.");
         }
 
+        List<GrantedAuthority> authorities =
+                List.of(new SimpleGrantedAuthority("ROLE_USER"));
+
+        UsernamePasswordAuthenticationToken authenticationToken =
+                new UsernamePasswordAuthenticationToken(user, null, authorities);
+
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         if (fakeRedisStorage != null) {
-            fakeRedisStorage.remove("login:" + email);
+            fakeRedisStorage.remove("login:" + cleanEmail);
         } else if (redisTemplate != null) {
-            redisTemplate.delete("login:" + email);
+            redisTemplate.delete("login:" + cleanEmail);
         }
         return user;
     }

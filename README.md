@@ -41,3 +41,13 @@ app1/config/SecurityConfig.java 를 추가하고 거기에서 해제
 http://localhost:8080/api/auth/verify?email=이메일6079@gmail.com&username=원하는이름&code=인증번호
 500 오류 = 프로그램 내부 문제
 정확히 입력했지만 "인증번호가 만료되었거나 존재하지 않습니다." 반환
+
+25/11/07
+git push 오류  git add . && git commit -m "work" && git push origin main 를 사용시 
+! [rejected]        main -> main (fetch first)
+error: failed to push some refs to
+ 이뜨는 문제 이것은 지금 이 push 하려는 작업 말고 다른 방법으로 수정되어 지금 작업과 git에 있는작업이 일치하지않아서 생긴 현상이다 발생하는 이유는 다른 팀원이 먼저 push하거나 나처럼 git 에서 README 를 수정하고 업로드해서 생긴 문제이다 
+ git push 를 그냥 입력하니 git push --set-upstream origin main를 다시한번 입력해보라고 추천해줘서 입력하니 해결되었다
+
+ 어제의 500문제로 고민했다 원인은 3가지로 생각했다 
+ 1 
