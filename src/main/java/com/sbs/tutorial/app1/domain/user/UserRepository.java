@@ -1,4 +1,4 @@
-package com.sbs.tutorial.app1.user;
+package com.sbs.tutorial.app1.domain.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,7 +1,7 @@
-package com.sbs.tutorial.app1.auth;
+package com.sbs.tutorial.app1.domain.user.service;
 
-import com.sbs.tutorial.app1.user.User;
-import com.sbs.tutorial.app1.user.UserRepository;
+import com.sbs.tutorial.app1.domain.user.User;
+import com.sbs.tutorial.app1.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -83,8 +83,15 @@ public class AuthService {
                 List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
         UsernamePasswordAuthenticationToken authenticationToken =
-                new UsernamePasswordAuthenticationToken(user, null, authorities);
-
+                new UsernamePasswordAuthenticationToken(
+                        new org.springframework.security.core.userdetails.User(
+                                user.getEmail(),
+                                "",
+                                authorities
+                        ),
+                        null,
+                        authorities
+                );
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 
         if (fakeRedisStorage != null) {

@@ -1,5 +1,7 @@
-package com.sbs.tutorial.app1.user;
+package com.sbs.tutorial.app1.domain.user.service;
 
+import com.sbs.tutorial.app1.domain.user.User;
+import com.sbs.tutorial.app1.domain.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
