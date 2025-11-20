@@ -14,10 +14,19 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**"
+                        ).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
+
                 // 일반적 로그인 기능이 작동하지않아 정보또한 자동 저장하지않아 직접 설정함
                 .securityContext(security ->
                         security.requireExplicitSave(false))
