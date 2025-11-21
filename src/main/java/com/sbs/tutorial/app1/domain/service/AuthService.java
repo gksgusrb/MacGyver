@@ -1,7 +1,7 @@
-package com.sbs.tutorial.app1.domain.user.service;
+package com.sbs.tutorial.app1.domain.service;
 
-import com.sbs.tutorial.app1.domain.user.User;
-import com.sbs.tutorial.app1.domain.user.UserRepository;
+import com.sbs.tutorial.app1.domain.user.Member;
+import com.sbs.tutorial.app1.domain.user.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,7 +17,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
     private final StringRedisTemplate redisTemplate;
     private final Map<String, String> fakeRedisStorage; //로컬
 
@@ -43,15 +43,15 @@ public class AuthService {
             throw new RuntimeException("인증번호가 일치하지 않습니다.");
         }
 
-        if (userRepository.existsByEmail(cleanEmail)) {
+        if (memberRepository.existsByEmail(cleanEmail)) {
             throw new RuntimeException("이미 가입된 이메일입니다.");
         }
-        User user = User.builder()
+        Member member = Member.builder()
                 .email(cleanEmail)
                 .username(username)
                 .verified(true)
                 .build();
-        userRepository.save(user);
+        memberRepository.save(member);
 
         if (fakeRedisStorage != null) {
             fakeRedisStorage.remove("verify:" + cleanEmail);
@@ -59,9 +59,9 @@ public class AuthService {
             redisTemplate.delete("verify:" + cleanEmail);
         }
     }
-    public User logincode(String email,String inputCode) {
+    public Member logincode(String email, String inputCode) {
         String cleanEmail = email.trim();
-        User user = userRepository.findByEmail(cleanEmail)
+        Member member = memberRepository.findByEmail(cleanEmail)
                 .orElseThrow(() -> new RuntimeException("없는 이메일입니다"));
 
         String savedCode;
@@ -80,12 +80,12 @@ public class AuthService {
         }
 
         List<GrantedAuthority> authorities =
-                List.of(new SimpleGrantedAuthority("ROLE_USER"));
+                List.of(new SimpleGrantedAuthority(member.getRole().getValue()));
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(
                         new org.springframework.security.core.userdetails.User(
-                                user.getEmail(),
+                                member.getEmail(),
                                 "",
                                 authorities
                         ),
@@ -99,7 +99,7 @@ public class AuthService {
         } else if (redisTemplate != null) {
             redisTemplate.delete("login:" + cleanEmail);
         }
-        return user;
+        return member;
     }
 
 }

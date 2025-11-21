@@ -1,4 +1,4 @@
-package com.sbs.tutorial.app1.domain.user.service;
+package com.sbs.tutorial.app1.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

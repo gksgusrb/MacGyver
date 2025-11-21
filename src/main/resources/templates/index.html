@@ -1,67 +1,81 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8" />
-    <title>MacGyver Login Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>MacGyver 사이트</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        /* 상단 네비바 */
+        .navbar {
+            width: 100%;
+            height: 60px;
+            background: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .navbar .title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .navbar .nav-buttons a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 16px;
+        }
+
+        .navbar .nav-buttons a:hover {
+            text-decoration: underline;
+        }
+
+        /* 메인 콘텐츠 */
+        .content {
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        .content h1 {
+            font-size: 38px;
+            font-weight: bold;
+        }
+
+        .content p {
+            margin-top: 15px;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
 </head>
+
 <body>
-<h1>MacGyver Login Test</h1>
 
-<h2>1. 로그인 코드 요청</h2>
-<input id="email" placeholder="이메일 입력">
-<button onclick="sendCode()">코드 받기</button>
+<div class="navbar">
+    <div class="title">MacGyver 사이트</div>
 
-<h2>2. 로그인 인증</h2>
-<input id="code" placeholder="인증번호 입력">
-<button onclick="verifyLogin()">로그인</button>
+    <div class="nav-buttons">
+        <a href="/login">로그인</a>
+        <a href="/join.html">회원가입</a>
+    </div>
+</div>
 
-<h2>3. 로그인 상태 확인</h2>
-<button onclick="checkMe()">/me 호출</button>
+<div class="content">
+    <h1>MacGyver 사이트에 오신 것을 환영합니다!</h1>
+    <p>여기는 계산기, 단위변환기, 아스키 아트 등 다양한 기능을 제공할 예정입니다.</p>
+</div>
 
-<h2>4. 로그아웃</h2>
-<button onclick="logout()">로그아웃</button>
-
-<script>
-    async function sendCode() {
-        const email = document.getElementById("email").value;
-
-        const res = await fetch("/api/auth/login/send-code?email=" + email, {
-            method: "POST",
-            credentials: "include"
-        });
-
-        alert(await res.text());
-    }
-
-    async function verifyLogin() {
-        const email = document.getElementById("email").value;
-        const code  = document.getElementById("code").value;
-
-        const res = await fetch("/api/auth/login/verify?email=" + email + "&code=" + code, {
-            method: "POST",
-            credentials: "include"
-        });
-
-        alert(await res.text());
-    }
-
-    async function checkMe() {
-        const res = await fetch("/api/auth/me", {
-            method: "GET",
-            credentials: "include"
-        });
-
-        alert(await res.text());
-    }
-
-    async function logout() {
-        const res = await fetch("/api/auth/logout", {
-            method: "POST",
-            credentials: "include"
-        });
-
-        alert(await res.text());
-    }
-</script>
 </body>
 </html>

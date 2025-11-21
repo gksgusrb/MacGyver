@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MacGyver Login Test</title>
+</head>
+<body>
+
+<h1>MacGyver Login Test</h1>
+
+<h2>1. 로그인 코드 요청</h2>
+<input id="email" placeholder="이메일 입력">
+<button onclick="sendCode()">코드 받기</button>
+
+<h2>2. 로그인 인증</h2>
+<input id="code" placeholder="인증번호 입력">
+<button onclick="verifyLogin()">로그인</button>
+
+<h2>3. /me 호출</h2>
+<button onclick="checkMe()">상태 확인</button>
+
+<h2>4. 로그아웃</h2>
+<button onclick="logout()">로그아웃</button>
+
+<script>
+    function getCsrfToken() {
+        const cookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('XSRF-TOKEN='));
+
+        return cookie ? cookie.split('=')[1] : null;
+    }
+
+    async function sendCode() {
+        const email = document.getElementById("email").value;
+
+        const res = await fetch("/api/auth/login/send-code?email=" + email, {
+            method: "POST",
+            headers: {
+                "X-XSRF-TOKEN": getCsrfToken()
+            },
+            credentials: "include"
+        });
+
+        alert(await res.text());
+    }
+
+    async function verifyLogin() {
+        const email = document.getElementById("email").value;
+        const code = document.getElementById("code").value;
+
+        const res = await fetch("/api/auth/login/verify?email=" + email + "&code=" + code, {
+            method: "POST",
+            headers: {
+                "X-XSRF-TOKEN": getCsrfToken()
+            },
+            credentials: "include"
+        });
+
+        alert(await res.text());
+    }
+
+    async function checkMe() {
+        const res = await fetch("/api/auth/me", {
+            method: "GET",
+            credentials: "include"
+        });
+
+        alert(await res.text());
+    }
+
+    async function logout() {
+        const res = await fetch("/api/auth/logout", {
+            method: "POST",
+            headers: {
+                "X-XSRF-TOKEN": getCsrfToken()
+            },
+            credentials: "include"
+        });
+
+        alert(await res.text());
+    }
+</script>
+
+</body>
+</html>

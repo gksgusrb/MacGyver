@@ -1,18 +1,18 @@
-package com.sbs.tutorial.app1.domain.user.controller;
+package com.sbs.tutorial.app1.domain.controller;
 
-import com.sbs.tutorial.app1.domain.user.service.AuthService;
-import com.sbs.tutorial.app1.domain.user.service.EmailService;
-import com.sbs.tutorial.app1.domain.user.User;
+import com.sbs.tutorial.app1.domain.service.AuthService;
+import com.sbs.tutorial.app1.domain.service.EmailService;
+import com.sbs.tutorial.app1.domain.user.Member;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.Authenticator;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,6 +21,14 @@ public class AuthController {
 
     private final EmailService emailService;
     private final AuthService authService;
+
+    @GetMapping("/csrf-token")
+    public Map<String, Object> csrfToken(CsrfToken token) {
+        return Map.of(
+                "headerName", token.getHeaderName(),
+                "token", token.getToken()
+        );
+    }
 
     @PostMapping("/send-code")
     public ResponseEntity<String> sendCode(@RequestParam String email) {
@@ -47,7 +55,7 @@ public class AuthController {
             @RequestParam String email,
             @RequestParam String code) {
 
-        User user = authService.logincode(email, code);
+        Member member = authService.logincode(email, code);
         return ResponseEntity.ok("환영합니다.");
     }//^^ 로그인 컨트롤러^^
 // 로그인 유지 확인용 긁어옴 나중에는 지울듯
@@ -67,8 +75,8 @@ public ResponseEntity<?> me() {
     }
 
     // User 엔티티 타입일 때
-    if (principal instanceof com.sbs.tutorial.app1.domain.user.User user) {
-        return ResponseEntity.ok("현재 로그인한 사용자: " + user.getEmail());
+    if (principal instanceof Member member) {
+        return ResponseEntity.ok("현재 로그인한 사용자: " + member.getEmail());
     }
 
     return ResponseEntity.status(401).body("로그인 정보가 올바르지 않습니다.");

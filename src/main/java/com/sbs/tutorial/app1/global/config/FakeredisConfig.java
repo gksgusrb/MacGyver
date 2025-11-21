@@ -1,4 +1,4 @@
-package com.sbs.tutorial.app1.config;
+package com.sbs.tutorial.app1.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

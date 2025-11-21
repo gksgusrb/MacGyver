@@ -1,7 +1,7 @@
-package com.sbs.tutorial.app1.domain.user.service;
+package com.sbs.tutorial.app1.domain.service;
 
-import com.sbs.tutorial.app1.domain.user.User;
-import com.sbs.tutorial.app1.domain.user.UserRepository;
+import com.sbs.tutorial.app1.domain.user.Member;
+import com.sbs.tutorial.app1.domain.user.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,19 +15,19 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class UserSecurityService implements UserDetailsService {
-    private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        User user = userRepository.findByEmail(email)
+        Member member = memberRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을수 없습니다"));
 
-        List<GrantedAuthority> authorities = List.of(
-                new SimpleGrantedAuthority("ROLE_YOU")
-        );
+        List<GrantedAuthority> authorities =
+                List.of(new SimpleGrantedAuthority(member.getRole().getValue()));
+
         return new org.springframework.security.core.userdetails.User(
-                user.getEmail(),
+                member.getEmail(),
                 "",
                 authorities
         );

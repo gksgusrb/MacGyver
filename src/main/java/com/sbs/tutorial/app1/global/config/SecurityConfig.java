@@ -1,4 +1,4 @@
-package com.sbs.tutorial.app1.config;
+package com.sbs.tutorial.app1.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,19 +13,22 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
-
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/auth/login/**"))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
                                 "/index.html",
+                                "/login",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
                         ).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+
 
                 // 일반적 로그인 기능이 작동하지않아 정보또한 자동 저장하지않아 직접 설정함
                 .securityContext(security ->
@@ -36,7 +39,7 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
-                .logout(logout -> logout.disable());
+                .logout(logout -> logout.logoutUrl("/api/auth/logout").permitAll());
 
         return http.build();
     }
