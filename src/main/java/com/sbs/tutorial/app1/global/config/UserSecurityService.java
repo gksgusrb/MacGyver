@@ -1,7 +1,7 @@
-package com.sbs.tutorial.app1.domain.service;
+package com.sbs.tutorial.app1.global.config;
 
-import com.sbs.tutorial.app1.domain.user.Member;
-import com.sbs.tutorial.app1.domain.user.MemberRepository;
+import com.sbs.tutorial.app1.domain.member.entity.Member;
+import com.sbs.tutorial.app1.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -1,4 +1,4 @@
-package com.sbs.tutorial.app1.domain.user;
+package com.sbs.tutorial.app1.domain.member.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,7 +7,7 @@ import lombok.*;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
 @Table(name = "users")
-public class Member {
+public class Member { //가입된 유저 정보를 저장하고 꺼내옴
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

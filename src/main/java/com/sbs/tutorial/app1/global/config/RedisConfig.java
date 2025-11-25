@@ -18,4 +18,3 @@ public class RedisConfig {
         return new StringRedisTemplate(connectionFactory);
     }
 }
-//maping api 제거 여부 타임리프 어쩌고 RequestParam 생략 가능

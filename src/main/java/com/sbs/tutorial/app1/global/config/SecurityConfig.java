@@ -18,7 +18,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .ignoringRequestMatchers(
+                        .ignoringRequestMatchers( //이 곳에 적힌 url은 검사 제외
                                 new AntPathRequestMatcher ("/api/auth/login/**"),
                                 new AntPathRequestMatcher ("/api/auth/send-code"),
                                 new AntPathRequestMatcher  ("/api/auth/verify"),
@@ -27,7 +27,7 @@ public class SecurityConfig {
                         )
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
+                        .requestMatchers( //로그인없이 접근 가능한 리소스들
                                 "/",
                                 "/index.html",
                                 "/login",
@@ -44,7 +44,7 @@ public class SecurityConfig {
 
                 // 일반적 로그인 기능이 작동하지않아 정보또한 자동 저장하지않아 직접 설정함
                 .securityContext(security ->
-                        security.requireExplicitSave(false))
+                        security.requireExplicitSave(false)) //SecurityContext가 바뀌면 알아서 세션에 저장해라 (자동 저장)
                 // 비밀번호 없이 로그인 하는 방식에서 버그를 일으켜서 추가함
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
