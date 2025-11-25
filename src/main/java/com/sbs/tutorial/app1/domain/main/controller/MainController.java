@@ -20,4 +20,9 @@ public class MainController {
     public String newbody() {
         return "newbody";
     }
+
+    @GetMapping("/asciiart")
+    public String ASCIIAtr() {
+        return "ASCIIArt";
+    }
 }

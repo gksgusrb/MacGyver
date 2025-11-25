@@ -32,6 +32,7 @@ public class SecurityConfig {
                                 "/index.html",
                                 "/login",
                                 "/newbody",
+                                "/asciiart",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
@@ -48,15 +49,16 @@ public class SecurityConfig {
                 // 비밀번호 없이 로그인 하는 방식에서 버그를 일으켜서 추가함
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
-                )
+                )// 세션을 항상 한개는 만들어 두게 만들어 정보를 저장해 로그인 유지를 하게 만든다
+                // 위에서 세션에 항상 저장하게 하고 세션하나는 무조건 유지하게 함으로 로그인 유지    커스텀 로그인의 영향으로 일반적 로그인 기능을 꺼버려 내가 직접 설정해 줘야했다
                 .formLogin(form -> form.disable())
-                .httpBasic(httpBasic -> httpBasic.disable())
+                .httpBasic(httpBasic -> httpBasic.disable())// 두옵션전부 커스텀 로그인으로 꺼버림
                 .logout(logout -> logout
-                        .logoutUrl("/api/auth/logout")
-                        .logoutSuccessUrl("/")
-                        .invalidateHttpSession(true)
-                        .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID", "XSRF-TOKEN")
+                        .logoutUrl("/api/auth/logout") //로그아웃 이 해당 url로 온다면 싱행
+                        .logoutSuccessUrl("/")//수행후 메인페이지로 이동
+                        .invalidateHttpSession(true) //세션 제거
+                        .clearAuthentication(true) //Authentication 도 제거
+                        .deleteCookies("JSESSIONID", "XSRF-TOKEN") //쿠키 제거
                 );
         return http.build();
     }

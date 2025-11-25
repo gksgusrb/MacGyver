@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>아스키 아트</title>
+</head>
+<body style="margin: 0; font-family: 'consolas'; line-height: 85%; letter-spacing: 2px; font-size: 10px;">
+<canvas id="canvas" width="300" height="300" style="display:none;"></canvas>
+<h4 id="output"></h4>
+
+<script>
+    const img = new Image();
+    img.src = "/images/sample.png";
+
+    const canvas = document.querySelector('#canvas');
+    const ctx = canvas.getContext('2d');
+    const ascii = '@$#Y!=+~-ㅤ';
+
+    img.addEventListener('load', function () {
+        canvas.width = 300;
+        canvas.height = 300;
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        let result = '';
+
+        // j = y, i = x
+        for (let j = 0; j < canvas.height; j += 5) {
+            for (let i = 0; i < canvas.width; i += 3) {
+                const pixel = ctx.getImageData(i, j, 1, 1).data;
+                const gray = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
+
+                const index = Math.floor((gray / 255) * (ascii.length - 1));
+                result += ascii[index];
+            }
+            result += '\n';
+        }
+
+        document.querySelector('#output').innerText = result;
+    });
+</script>
+</body>
+</html>
