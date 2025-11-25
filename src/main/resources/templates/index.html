@@ -66,9 +66,8 @@
 <div class="navbar">
     <div class="title">MacGyver 사이트</div>
 
-    <div class="nav-buttons">
-        <a href="/login">로그인</a>
-        <a href="/join.html">회원가입</a>
+    <div class="nav-buttons" id="nav-user-area">
+        <!-- JS가 로그인 상태에 따라 자동으로 채움 -->
     </div>
 </div>
 
@@ -76,6 +75,60 @@
     <h1>MacGyver 사이트에 오신 것을 환영합니다!</h1>
     <p>여기는 계산기, 단위변환기, 아스키 아트 등 다양한 기능을 제공할 예정입니다.</p>
 </div>
+<script>
+    async function checkLoginStatus() {
+        const area = document.getElementById("nav-user-area");
 
+        try {
+            const res = await fetch("/api/auth/me", {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!res.ok) throw new Error();  // 로그인 안된 경우 catch로 이동
+
+            const text = await res.text();
+            const email = text.replace("현재 로그인한 사용자: ", "");
+
+            // 로그인 상태 UI
+            area.innerHTML = `
+                <span style="margin-right: 15px; font-weight: bold;">${email} 님</span>
+                <button onclick="logout()" style="
+                    background:#ff6060;
+                    border:none;
+                    color:white;
+                    padding:6px 10px;
+                    border-radius:5px;
+                    cursor:pointer;
+                ">로그아웃</button>
+            `;
+        } catch (e) {
+            // 비로그인 상태 UI
+            area.innerHTML = `
+                <a href="/login">로그인</a>
+                <a href="/newbody">회원가입</a>
+            `;
+        }
+    }
+
+async function logout() {
+    const token = document.cookie
+        .split("; ")
+        .find(v => v.startsWith("XSRF-TOKEN="))
+        ?.split("=")[1];
+
+    await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+            "X-XSRF-TOKEN": token
+        },
+        credentials: "include"
+    });
+
+    location.href = "/";
+}
+
+    window.onload = checkLoginStatus;
+</script>
 </body>
 </html>

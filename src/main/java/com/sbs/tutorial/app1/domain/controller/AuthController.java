@@ -22,6 +22,7 @@ public class AuthController {
     private final EmailService emailService;
     private final AuthService authService;
 
+    //로그인 회원가입 버그 났을때 토크이 재대로 동작하는 지 확인하기 위해 사용
     @GetMapping("/csrf-token")
     public Map<String, Object> csrfToken(CsrfToken token) {
         return Map.of(
@@ -30,21 +31,24 @@ public class AuthController {
         );
     }
 
+// html이나 post에 /api/auth/send-code 에 요청이 들어오면 @RequestParam String email 로 이메일을 가져와 실행
     @PostMapping("/send-code")
     public ResponseEntity<String> sendCode(@RequestParam String email) {
+        // 이메일 서비스에 있는 public void sendVerificationCode(String email) 매서드 호출 그곳에 변수를 넘김
         emailService.sendVerificationCode(email);
         return ResponseEntity.ok("인증번호가 이메일로 발송되었습니다");
     }
 
     @PostMapping("/verify")
     public ResponseEntity<String> verifyAndRegister(
+
             @RequestParam String email,
             @RequestParam String username,
             @RequestParam String code) {
-
         authService.verifyCodeAndRegister(email, username, code);
         return ResponseEntity.ok("회원가입이 완료되었습니다.");
     }// ^^회원가입 컨트롤러^^
+
     @PostMapping("/login/send-code")
     public ResponseEntity<String> SendLoginCode(@RequestParam String email) {
         emailService.sendloginCode(email);
@@ -81,16 +85,4 @@ public ResponseEntity<?> me() {
 
     return ResponseEntity.status(401).body("로그인 정보가 올바르지 않습니다.");
 }
-    // 로그아웃 기능
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request) {
-
-        // 세션 초기화
-        request.getSession().invalidate();
-
-        // 시큐리티 인증 초기화
-        SecurityContextHolder.clearContext();
-
-        return ResponseEntity.ok("로그아웃 완료");
-    }
 }

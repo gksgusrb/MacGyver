@@ -18,9 +18,10 @@ public class EmailService {
     private final StringRedisTemplate redisTemplate; // prod 에서 사용
     private final Map<String, String> fakeRedisStorage; //dev에서 사용
 
+    //아더 컨트롤에서 받은 이메일로 인증번호 생성
     public void sendVerificationCode(String email) {
-        String code = String.format("%06d", new Random().nextInt(999999));
-        //dev면 fake 사용
+        String code = String.format("%06d", new Random().nextInt(999999)); // 난수 생성
+        //dev면 fake Redis사용 난수 생성후 가짜와 진짜를 구별함 근대 나는 dev로 설정해두었기 떄문 계속 가짜 사용중
         if (fakeRedisStorage != null) {
             fakeRedisStorage.put("verify:" + email, code);
         } else {

@@ -2,6 +2,7 @@ package com.sbs.tutorial.app1.domain.service;
 
 import com.sbs.tutorial.app1.domain.user.Member;
 import com.sbs.tutorial.app1.domain.user.MemberRepository;
+import com.sbs.tutorial.app1.domain.user.MemberRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -46,10 +47,16 @@ public class AuthService {
         if (memberRepository.existsByEmail(cleanEmail)) {
             throw new RuntimeException("이미 가입된 이메일입니다.");
         }
+
+        if (memberRepository.existsByUsername(username)) {
+            throw new RuntimeException("이미 사용 중인 닉네임입니다.");
+        }
+
         Member member = Member.builder()
                 .email(cleanEmail)
                 .username(username)
                 .verified(true)
+                .role(MemberRole.USER)
                 .build();
         memberRepository.save(member);
 
