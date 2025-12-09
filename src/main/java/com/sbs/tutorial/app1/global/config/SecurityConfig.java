@@ -33,13 +33,16 @@ public class SecurityConfig {
                                 "/login",
                                 "/newbody",
                                 "/asciiart",
+                                "/ascii",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**"
                         ).permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ascii/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
+
                 )
 
 

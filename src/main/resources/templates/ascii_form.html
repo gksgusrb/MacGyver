@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>ASCII 작품 작성</title>
+</head>
+<body>
+<a th:href="@{/ascii/list}">← 목록으로</a>
+
+<h1>ASCII 작품 작성</h1>
+
+<form th:action="@{/ascii/create}"
+      th:object="${asciiform}"
+      method="post">
+
+    <div>
+        <label for="subject">제목</label>
+        <input type="text" id="subject" th:field="*{subject}">
+        <div th:if="${#fields.hasErrors('subject')}"
+             th:errors="*{subject}"></div>
+    </div>
+
+    <div>
+        <label for="content">내용</label><br/>
+        <textarea id="content" th:field="*{content}" rows="20" cols="80"></textarea>
+        <div th:if="${#fields.hasErrors('content')}"
+             th:errors="*{content}"></div>
+    </div>
+
+    <div>
+        <label>
+            <input type="checkbox" th:field="*{public}">
+            공개하기
+        </label>
+    </div>
+
+    <button type="submit">저장</button>
+</form>
+
+</body>
+</html>

@@ -5,7 +5,7 @@ import lombok.*;
 
 @Entity
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@NoArgsConstructor @AllArgsConstructor @Builder //편리하다함 근대 @AllArgConstructor 없으면 버그남
 @Table(name = "users")
 public class Member { //가입된 유저 정보를 저장하고 꺼내옴
     @Id

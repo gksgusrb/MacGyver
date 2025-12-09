@@ -1,7 +1,7 @@
 package com.sbs.tutorial.app1.domain.member.controller;
 
 import com.sbs.tutorial.app1.domain.member.service.MemberService;
-import com.sbs.tutorial.app1.domain.email.service.EmailService;
+import com.sbs.tutorial.app1.domain.clean.email.service.EmailService;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

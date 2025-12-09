@@ -1,4 +1,4 @@
-package com.sbs.tutorial.app1.domain.email.service;
+package com.sbs.tutorial.app1.domain.clean.email.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

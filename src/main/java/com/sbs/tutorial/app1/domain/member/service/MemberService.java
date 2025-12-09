@@ -3,6 +3,7 @@ package com.sbs.tutorial.app1.domain.member.service;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
 import com.sbs.tutorial.app1.domain.member.repository.MemberRepository;
 import com.sbs.tutorial.app1.domain.member.entity.MemberRole;
+import exception.DataNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -107,6 +108,11 @@ public class MemberService {
             redisTemplate.delete("login:" + cleanEmail);
         }
         return member;
+    }
+
+    public Member getMemberByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new DataNotFoundException("회원 정보를 찾을 수 없습니다."));
     }
 
 }

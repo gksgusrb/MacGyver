@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>ASCII 작품 목록</title>
+</head>
+<body>
+<h1>ASCII 작품 목록</h1>
+
+<a th:href="@{/ascii/create}">새 작품 만들기</a>
+<hr/>
+
+<div th:if="${#lists.isEmpty(asciiList)}">
+    아직 공개된 작품이 없습니다.
+</div>
+
+<ul th:if="${!#lists.isEmpty(asciiList)}">
+    <li th:each="art : ${asciiList}">
+        <a th:href="@{|/ascii/detail/${art.id}|}"
+           th:text="${art.subject}">제목</a>
+        &nbsp;— by <span th:text="${art.owner.username}">작성자</span>
+    </li>
+</ul>
+
+</body>
+</html>

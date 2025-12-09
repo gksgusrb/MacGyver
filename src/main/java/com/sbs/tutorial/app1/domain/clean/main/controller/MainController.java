@@ -1,4 +1,4 @@
-package com.sbs.tutorial.app1.domain.main.controller;
+package com.sbs.tutorial.app1.domain.clean.main.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
