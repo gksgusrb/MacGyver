@@ -2,8 +2,54 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title th:text="${ascii.subject}">ASCII 작품</title>
+
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .navbar {
+            width: 100%;
+            height: 60px;
+            background: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .navbar .title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .navbar .nav-buttons a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 16px;
+        }
+
+        .navbar .nav-buttons a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            max-width: 900px;
+            margin: 40px auto;
+            background: white;
+            padding: 20px 25px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
         pre {
             font-family: "Consolas", "Courier New", monospace;
             white-space: pre;
@@ -11,21 +57,99 @@
     </style>
 </head>
 <body>
-<a th:href="@{/ascii/list}">← 목록으로</a>
 
-<h1 th:text="${ascii.subject}">제목</h1>
-<p>
-    작성자:
-    <span th:text="${ascii.owner.username}">작성자</span>
-</p>
-<p>
-    공개 여부:
-    <span th:text="${ascii.public} ? '공개' : '비공개'"></span>
-</p>
+<div class="navbar">
+    <div class="title">
+        <a href="/" style="color:white; text-decoration:none;">MacGyver 사이트</a>
+    </div>
 
-<hr/>
+    <div class="nav-buttons" id="nav-user-area">
+        <!-- JS가 로그인 상태에 따라 자동으로 채움 -->
+    </div>
+</div>
 
-<pre th:text="${ascii.content}">내용</pre>
+<div class="content">
+    <a th:href="@{/ascii/list}">← 목록으로</a>
+
+    <h1 th:text="${ascii.subject}">제목</h1>
+
+    <p>
+        <a th:href="@{|/ascii/modify/${ascii.id}|}">수정</a>
+        |
+        <a th:href="@{|/ascii/delete/${ascii.id}|}">삭제</a>
+    </p>
+
+    <p>
+        작성자:
+        <a th:href="@{|/ascii/user/${ascii.owner.id}|}"
+           th:text="${ascii.owner.username}">작성자</a>
+    </p>
+
+    <p>
+        공개 여부:
+        <span th:if="${ascii.public}" style="color: green;">공개</span>
+        <span th:if="${!ascii.public}" style="color: gray;">비공개</span>
+    </p>
+
+    <hr/>
+
+    <pre th:text="${ascii.content}">내용</pre>
+</div>
+
+<script>
+    async function checkLoginStatus() {
+        const area = document.getElementById("nav-user-area");
+
+        try {
+            const res = await fetch("/api/auth/me", {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!res.ok) throw new Error();
+
+            const text = await res.text();
+            const email = text.replace("현재 로그인한 사용자: ", "");
+
+            area.innerHTML = `
+                <span style="margin-right: 15px; font-weight: bold;">${email} 님</span>
+                <a href="/ascii/my" style="margin-right: 10px; color:white; text-decoration:none;">내 작품</a>
+                <button onclick="logout()" style="
+                    background:#ff6060;
+                    border:none;
+                    color:white;
+                    padding:6px 10px;
+                    border-radius:5px;
+                    cursor:pointer;
+                ">로그아웃</button>
+            `;
+        } catch (e) {
+            area.innerHTML = `
+                <a href="/login">로그인</a>
+                <a href="/newbody">회원가입</a>
+            `;
+        }
+    }
+
+    async function logout() {
+        const token = document.cookie
+            .split("; ")
+            .find(v => v.startsWith("XSRF-TOKEN="))
+            ?.split("=")[1];
+
+        await fetch("/api/auth/logout", {
+            method: "POST",
+            headers: {
+                "X-XSRF-TOKEN": token
+            },
+            credentials: "include"
+        });
+
+        location.href = "/";
+    }
+
+    window.onload = checkLoginStatus;
+</script>
 
 </body>
 </html>

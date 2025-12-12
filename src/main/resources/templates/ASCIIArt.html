@@ -4,82 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>아스키아트</title>
-     <style>
+    <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             font-family: Arial, sans-serif;
             background: #f5f5f5;
         }
 
-        /* 상단 네비바 */
-        .navbar {
-            width: 100%;
-            height: 60px;
-            background: #222;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            box-sizing: border-box;
+        /* 상단 네비바는 나중에 메인과 통일해도 됨 */
+
+        input[type="file"] {
+            margin-bottom: 10px;
         }
 
-        .navbar .title {
-            font-size: 22px;
-            font-weight: bold;
+        p {
+            margin: 8px 0 16px 0;
         }
 
-        .navbar .nav-buttons a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
-            font-size: 16px;
-        }
-
-        .navbar .nav-buttons a:hover {
-            text-decoration: underline;
-        }
-
-        /* 메인 콘텐츠 */
-        .content {
-            margin-top: 50px;
-            text-align: center;
-        }
-
-        .content h1 {
-            font-size: 38px;
-            font-weight: bold;
-        }
-
-        .content p {
-            margin-top: 15px;
-            font-size: 18px;
-            color: #666;
+        #output {
+            margin-top: 10px;
+            font-family: "Consolas", "Courier New", monospace;
+            white-space: pre;
+            line-height: 0.7;   /* 줄 간격 줄이기 */
+            font-size: 7px;     /* 글자 크기 줄이기 → 더 많이 보이게 */
         }
     </style>
 </head>
-<body style="margin: 0; font-family: 'consolas'; line-height: 1; letter-spacing: 0; font-size: 10px;">
+<body>
 
 <input type="file" id="fileInput" accept="image/*">
 <p>이미지를 선택하면 아래에 아스키 아트가 출력됩니다.</p>
 
-<canvas id="canvas" width="300" height="300" style="display:none;"></canvas>
-<h4 id="output"></h4>
+<canvas id="canvas" width="400" height="400" style="display:none;"></canvas>
+<pre id="output"></pre>
 
 <script>
     let img = new Image();
-    let canvas = document.querySelector('#canvas');
-    let ctx = canvas.getContext('2d');
-    let ascii = '@%#*+=-:. '
+    const canvas = document.querySelector('#canvas');
+    const ctx = canvas.getContext('2d');
 
-    let fileInput = document.querySelector('#fileInput');
+    // 어두운 쪽부터 밝은 쪽까지 문자 배열
+    const asciiChars = '@%#*+=-:. ';
+
+    const fileInput = document.querySelector('#fileInput');
 
     fileInput.addEventListener('change', function (e) {
-        let file = e.target.files[0];
+        const file = e.target.files[0];
         if (!file) return;
 
-        let reader = new FileReader();
+        const reader = new FileReader();
 
         reader.onload = function (ev) {
             img = new Image();
@@ -88,8 +62,9 @@
                 let w = img.width;
                 let h = img.height;
 
-                let maxWidth = 300;
-                let maxHeight = 300;
+                // === 1) 캔버스 최대 크기 늘리기 ===
+                let maxWidth = 400;
+                let maxHeight = 400;
                 let scale = Math.min(maxWidth / w, maxHeight / h, 1);
                 w = Math.floor(w * scale);
                 h = Math.floor(h * scale);
@@ -98,26 +73,42 @@
                 canvas.height = h;
                 ctx.drawImage(img, 0, 0, w, h);
 
+                // === 2) 전체 이미지 데이터를 한 번만 가져오기 ===
+                const imageData = ctx.getImageData(0, 0, w, h).data;
+
                 let result = '';
 
-                 let maxCols = 120;              //가로 글자수 조절
-                let cols = Math.min(maxCols, w);
-                let stepX = w / cols;
+                // === 3) 해상도(글자 수) 올리기 ===
+                const maxCols = 220;      // 가로 글자 수 (원래 120 → 220으로 업!)
+                const cols = Math.min(maxCols, w);
+                const stepX = w / cols;
 
-                let charAspect = 1.8;          //세로 간격
-                let stepY = stepX * charAspect;
+                const charAspect = 2.0;   // 문자 세로 비율(폰트 비율 맞추려고 약 2배 정도)
+                const stepY = stepX * charAspect;
 
-                for (let j = 0; j < h; j += stepY) {
-                    for (let i = 0; i < w; i += stepX) {
-                        let pixel = ctx.getImageData( Math.floor(i), Math.floor(j), 1, 1).data;
-                        let gray = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
-                        let index = Math.floor((gray / 255) * (ascii.length - 1));
-                        result += ascii[index];
+                for (let y = 0; y < h; y += stepY) {
+                    const yy = Math.floor(y);
+                    for (let x = 0; x < w; x += stepX) {
+                        const xx = Math.floor(x);
+
+                        // (x, y) 위치의 픽셀 인덱스 계산
+                        const idx = (yy * w + xx) * 4;  // RGBA 4바이트씩
+                        const r = imageData[idx];
+                        const g = imageData[idx + 1];
+                        const b = imageData[idx + 2];
+
+                        // 밝기(그레이스케일)로 변환
+                        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+                        // 0~255 → 0~(asciiChars.length-1) 로 매핑
+                        const charIndex = Math.floor((gray / 255) * (asciiChars.length - 1));
+
+                        result += asciiChars[charIndex];
                     }
                     result += '\n';
                 }
 
-                document.querySelector('#output').innerText = result;
+                document.querySelector('#output').textContent = result;
             };
             img.src = ev.target.result;
         };

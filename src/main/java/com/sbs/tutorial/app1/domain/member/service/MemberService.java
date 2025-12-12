@@ -1,16 +1,19 @@
 package com.sbs.tutorial.app1.domain.member.service;
 
+import com.sbs.tutorial.app1.domain.clean.email.service.EmailService;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
 import com.sbs.tutorial.app1.domain.member.repository.MemberRepository;
 import com.sbs.tutorial.app1.domain.member.entity.MemberRole;
 import exception.DataNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +25,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final StringRedisTemplate redisTemplate;
     private final Map<String, String> fakeRedisStorage; //로컬
+    private final EmailService emailService;
 //authcontroller에서 호출 받아서 authService.verifyCodeAndRegister(email, username, code) 정보를받아옴
     public void verifyCodeAndRegister(String email, String username, String inputCode) {
         String cleanEmail = email.trim();// 변수를 설정해 뛰어쓰기 하더라고 공백을 제거하고 입력받음
@@ -113,6 +117,38 @@ public class MemberService {
     public Member getMemberByEmail(String email) {
         return memberRepository.findByEmail(email)
                 .orElseThrow(() -> new DataNotFoundException("회원 정보를 찾을 수 없습니다."));
+    }
+
+    public Member getMemberById(Long id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new DataNotFoundException("회원 정보를 찾을 수 없습니다."));
+    }
+
+    public void sendJoinCode(String email) {
+        String cleanEmail = email.trim();
+
+        if (memberRepository.existsByEmail(cleanEmail)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "이미 가입된 이메일입니다."
+            );
+        }
+
+        emailService.sendVerificationCode(cleanEmail);
+    }
+
+    public void sendLoginCode(String email) {
+        String cleanEmail = email.trim();
+
+        // 가입되지 않은 이메일이면 코드 안 보냄
+        if (!memberRepository.existsByEmail(cleanEmail)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "가입되지 않은 이메일입니다."
+            );
+        }
+
+        emailService.sendloginCode(cleanEmail);
     }
 
 }

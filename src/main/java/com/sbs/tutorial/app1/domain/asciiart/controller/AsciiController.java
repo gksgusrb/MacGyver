@@ -78,4 +78,90 @@ public class AsciiController {
 
         return "redirect:/ascii/list";
     }
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/modify/{id}")
+    public String asciiModify(Asciiform asciiform, @PathVariable("id") Integer id, Principal principal) {
+        Ascii ascii = asciiService.getAscii(id);
+
+        if (!ascii.getOwner().getEmail().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"수정 권한이 없습니다");
+        }
+
+        asciiform.setSubject(ascii.getSubject());
+        asciiform.setContent(ascii.getContent());
+        asciiform.setPublic(ascii.isPublic());
+
+        return "ascii_form";
+    }
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/modify/{id}")
+    public String asciiModify(@Valid Asciiform asciiform, BindingResult bindingResult,
+                              Principal principal, @PathVariable("id") Integer id) {
+        if (bindingResult.hasErrors()) {
+            return "ascii_form";
+        }
+
+        Ascii ascii = asciiService.getAscii(id);
+        if (!ascii.getOwner().getEmail().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 권한이 없습니다.");
+        }
+
+        asciiService.modify( ascii, asciiform.getSubject(), asciiform.getContent(), asciiform.isPublic());
+        return String.format("redirect:/ascii/detail/%d", id);
+    }
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/delete/{id}")
+    public String delete(@PathVariable("id") Integer id,
+                         Principal principal) {
+
+        Ascii ascii = asciiService.getAscii(id);
+        
+        if (!ascii.getOwner().getEmail().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "삭제 권한이 없습니다.");
+        }
+
+        asciiService.delete(ascii);
+        return "redirect:/ascii/list";
+    }
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/my")
+    public String myPage(Model model, Principal principal) {
+
+        Member me = memberService.getMemberByEmail(principal.getName());
+
+        List<Ascii> asciiList = asciiService.getMyList(me);
+
+        model.addAttribute("owner", me);
+        model.addAttribute("asciiList", asciiList);
+        model.addAttribute("isMyPage", true); // 템플릿에서 사용
+
+        return "ascii_mypage";
+    }
+    @GetMapping("/user/{memberId}")
+    public String userPage(Model model,
+                           @PathVariable("memberId") Long memberId,
+                           Principal principal) {
+
+        Member owner = memberService.getMemberById(memberId);
+
+        boolean isOwner = false;
+        if (principal != null) {
+            isOwner = owner.getEmail().equals(principal.getName());
+        }
+
+        List<Ascii> asciiList;
+        if (isOwner) {
+            // 내가 나 자신의 페이지를 보는 경우 → 전체
+            asciiList = asciiService.getMyList(owner);
+        } else {
+            // 다른 사람이 보는 경우 → 공개 작품만
+            asciiList = asciiService.getPublicListByOwner(owner);
+        }
+
+        model.addAttribute("owner", owner);
+        model.addAttribute("asciiList", asciiList);
+        model.addAttribute("isMyPage", isOwner);
+
+        return "ascii_mypage";
+    }
 }

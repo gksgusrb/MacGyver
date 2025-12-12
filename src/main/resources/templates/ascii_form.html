@@ -9,9 +9,7 @@
 
 <h1>ASCII 작품 작성</h1>
 
-<form th:action="@{/ascii/create}"
-      th:object="${asciiform}"
-      method="post">
+<form th:action th:object="${asciiform}" method="post">
 
     <div>
         <label for="subject">제목</label>

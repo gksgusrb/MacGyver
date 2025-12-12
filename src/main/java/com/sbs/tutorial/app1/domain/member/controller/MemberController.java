@@ -4,6 +4,8 @@ import com.sbs.tutorial.app1.domain.member.service.MemberService;
 import com.sbs.tutorial.app1.domain.clean.email.service.EmailService;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,26 +35,28 @@ public class MemberController {
 // html이나 post에 /api/auth/send-code 에 요청이 들어오면 String email 로 이메일을 가져와 실행
     @PostMapping("/send-code")
     public ResponseEntity<String> sendCode(String email) {
-        // 이메일 서비스에 있는 public void sendVerificationCode(String email) 매서드 호출 그곳에 변수를 넘김
-        emailService.sendVerificationCode(email);
-        return ResponseEntity.ok("인증번호가 이메일로 발송되었습니다");
+        memberService.sendJoinCode(email);
+        return ResponseEntity.ok("인증번호가 이메일로 발송되었습니다 ");
     }
-//api/auth/send-code/verify 요청 즉 인증번호를 완벽히 적고 회원가입 버튼을 눌렀을때 작동함
+    //api/auth/send-code/verify 요청 즉 인증번호를 완벽히 적고 회원가입 버튼을 눌렀을때 작동함
     @PostMapping("/verify")
     public ResponseEntity<String> verifyAndRegister(String email, String username, String code) { // 요청 받은 이메일 이름 압력받은 난수를 받아서 저장함
-        memberService.verifyCodeAndRegister(email, username, code);//저장된 정보를 authService에 있는 verifyCodeAndRegister 에 보냄 예외 발생시 서비스에서 컨트러로 반환됨
+        String cleanEmail = email.trim();
+        String cleanUsername = username.trim();
+
+        memberService.verifyCodeAndRegister(cleanEmail, cleanUsername, code);//저장된 정보를 authService에 있는 verifyCodeAndRegister 에 보냄 예외 발생시 서비스에서 컨트러로 반환됨
         return ResponseEntity.ok("회원가입이 완료되었습니다."); // 모두 완료되어 끝이나면 리턴함
     }// ^^회원가입 컨트롤러^^
 
     @PostMapping("/login/send-code")
-    public ResponseEntity<String> SendLoginCode(String email) {
-        emailService.sendloginCode(email);
-        return ResponseEntity.ok(" 로그인 인증번호가 이메일로 발송되었습니다");
+    public ResponseEntity<String> sendLoginCode(String email) {
+        memberService.sendLoginCode(email);
+        return ResponseEntity.ok("로그인 인증번호가 이메일로 발송되었습니다");
     }
     @PostMapping("/login/verify")
     public ResponseEntity<String> verifyLogin(String email, String code) {
-
-        Member member = memberService.logincode(email, code);
+        String cleanEmail =email.trim();
+        Member member = memberService.logincode(cleanEmail, code);
         return ResponseEntity.ok("환영합니다.");
     }//^^ 로그인 컨트롤러^^
 
@@ -78,5 +82,5 @@ public ResponseEntity<?> me() {
     }
 
     return ResponseEntity.status(401).body("로그인 정보가 올바르지 않습니다.");
-}
+    }
 }

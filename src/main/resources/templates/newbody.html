@@ -89,6 +89,7 @@
 <button onclick="signup()">회원가입</button>
 
 <script>
+    // 쿠키에서 CSRF 토큰 꺼내기
     function getCsrfToken() {
         const cookie = document.cookie
             .split('; ')
@@ -98,26 +99,20 @@
     }
 
     /* -------------------------
-       인증번호 보내기
+       1) 인증번호 보내기
     -------------------------- */
     async function sendCode() {
-        const email = document.getElementById("email").value;
+    const email = document.getElementById("email").value.trim();
 
-        const res = await fetch(`/api/auth/send-code?email=${email}`, {
-            method: "POST",
-            headers: { "X-XSRF-TOKEN": getCsrfToken() },
-            credentials: "include"
-        });
-
-        alert(await res.text());
+    if (!email) {
+        alert("이메일을 입력해주세요.");
+        return;
     }
 
-    async function signup() {
-        const email = document.getElementById("email").value;
-        const code = document.getElementById("code").value;
-        const username = document.getElementById("username").value;
+    alert("인증번호 전송을 요청했습니다.\n메일이 도착하는 데 1~2분 정도 걸릴 수 있습니다.");
 
-        const res = await fetch(`/api/auth/verify?email=${email}&username=${username}&code=${code}`, {
+    try {
+        const res = await fetch(`/api/auth/send-code?email=${encodeURIComponent(email)}`, {
             method: "POST",
             headers: { "X-XSRF-TOKEN": getCsrfToken() },
             credentials: "include"
@@ -125,14 +120,65 @@
 
         const text = await res.text();
 
-        if (res.ok) {
-            alert(text);
-            window.location.href = "/";
-        } else {
-            alert(text);
+        if (!res.ok) {
+            alert(text || "인증번호 전송에 실패했습니다.");
+        }
+        // 성공(res.ok)이면 굳이 두 번째 팝업 안 띄워도 됨 (이미 앞에서 안내했으니까)
+    } catch (e) {
+        console.error(e);
+        alert("서버 통신 중 오류가 발생했습니다.");
+    }
+}
+
+    /* -------------------------
+       2) 회원가입 완료 요청
+    -------------------------- */
+    async function signup() {
+        const email = document.getElementById("email").value.trim();
+        const code = document.getElementById("code").value.trim();
+        const username = document.getElementById("username").value.trim();
+
+
+        if (!email) {
+            alert("이메일을 입력해주세요.");
+            return;
+        }
+        if (!code) {
+            alert("인증번호를 입력해주세요.");
+            return;
+        }
+        if (!username) {
+            alert("닉네임을 입력해주세요.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/auth/verify?email=${encodeURIComponent(email)}&username=${encodeURIComponent(username)}&code=${encodeURIComponent(code)}`, {
+                method: "POST",
+                headers: {
+                    "X-XSRF-TOKEN": getCsrfToken()
+                },
+                credentials: "include"
+            });
+
+            const text = await res.text();
+
+            if (res.ok) {
+                alert(text || "회원가입이 완료되었습니다.");
+
+                window.location.href = "/login"; // or "/"
+            } else {
+                alert(text || "회원가입에 실패했습니다. 입력값을 다시 확인해주세요.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("서버 통신 중 오류가 발생했습니다.");
         }
     }
 
+    /* -------------------------
+       3) 상단 네비바 (그대로 유지)
+    -------------------------- */
     async function setupNavbar() {
         const area = document.getElementById("nav-user-area");
         const path = window.location.pathname;
@@ -165,6 +211,7 @@
             `;
         }
     }
+
     async function logout() {
         const token = getCsrfToken();
 

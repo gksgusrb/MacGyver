@@ -2,25 +2,326 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>ASCII 작품 목록</title>
+    <title>ASCII 작품 목록 | MacGyver</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        /* ───── 네비바 (마이페이지와 동일 스타일) ───── */
+        .navbar {
+            width: 100%;
+            height: 60px;
+            background: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            margin: -20px -20px 20px -20px;
+        }
+
+        .navbar .title a {
+            color: white;
+            text-decoration: none;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .navbar .title a:hover {
+            text-decoration: underline;
+        }
+
+        .nav-buttons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-buttons a,
+        .nav-buttons button {
+            color: white;
+            text-decoration: none;
+            font-size: 15px;
+            padding: 6px 10px;
+            border-radius: 5px;
+            background: #3a3a3a;
+            border: none;
+            cursor: pointer;
+        }
+
+        .nav-buttons a:hover,
+        .nav-buttons button:hover {
+            background: #555;
+        }
+
+        /* ───── 메인 영역 ───── */
+        .container {
+            max-width: 900px;
+            margin: 0 auto 40px;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .sub-text {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .top-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 4px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0069d9;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .empty-message {
+            margin-top: 20px;
+            color: #777;
+        }
+
+        /* ───── 리스트 카드 (마이페이지 카드 스타일과 비슷하게) ───── */
+        .ascii-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .ascii-item {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+        .ascii-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .ascii-title a {
+            font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .ascii-title a:hover {
+            text-decoration: underline;
+        }
+
+        .ascii-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .ascii-meta a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .ascii-meta a:hover {
+            text-decoration: underline;
+        }
+
+        /* ───── 아스키 내용 미리보기 (마이페이지랑 톤만 살짝 다르게) ───── */
+        .ascii-preview {
+            margin-top: 6px;
+            background: #111;
+            color: #0f0;
+            border-radius: 4px;
+            padding: 6px;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 11px;
+            line-height: 1.1;
+            white-space: pre;
+            max-height: 200px;
+            overflow: auto;
+        }
+    </style>
 </head>
 <body>
-<h1>ASCII 작품 목록</h1>
 
-<a th:href="@{/ascii/create}">새 작품 만들기</a>
-<hr/>
-
-<div th:if="${#lists.isEmpty(asciiList)}">
-    아직 공개된 작품이 없습니다.
+<!-- ───── 상단 네비바 ───── -->
+<div class="navbar">
+    <div class="title">
+        <a href="/">MacGyver 사이트</a>
+    </div>
+    <div class="nav-buttons" id="nav-user-area"></div>
 </div>
 
-<ul th:if="${!#lists.isEmpty(asciiList)}">
-    <li th:each="art : ${asciiList}">
-        <a th:href="@{|/ascii/detail/${art.id}|}"
-           th:text="${art.subject}">제목</a>
-        &nbsp;— by <span th:text="${art.owner.username}">작성자</span>
-    </li>
-</ul>
+<div class="container">
+    <h1>ASCII 작품 목록</h1>
+    <div class="sub-text">
+        전 세계의 ASCII 작품들을 구경해보세요 ✨
+    </div>
+
+    <div class="top-actions">
+        <div>
+            <!-- 왼쪽 설명 추가해도 되고 비워둬도 됨 -->
+        </div>
+        <div>
+            <!-- 로그인 체크 후 이동하는 버튼 -->
+            <button type="button" class="btn-primary" onclick="goCreate()">✏ 작품 만들기</button>
+            <a href="/asciiart" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
+        </div>
+    </div>
+
+    <!-- 작품 없을 때 -->
+    <div th:if="${#lists.isEmpty(asciiList)}" class="empty-message">
+        아직 공개된 작품이 없습니다. 첫 작품의 주인이 되어보세요!
+    </div>
+
+    <!-- 작품 있을 때 -->
+    <div th:if="${!#lists.isEmpty(asciiList)}" class="ascii-list">
+        <div class="ascii-item" th:each="art : ${asciiList}">
+            <div class="ascii-header">
+                <div class="ascii-title">
+                    <a th:href="@{|/ascii/detail/${art.id}|}"
+                       th:text="${art.subject}">
+                        제목
+                    </a>
+                </div>
+                <div class="ascii-meta">
+                    by
+                    <a th:href="@{|/ascii/user/${art.owner.id}|}"
+                       th:text="${art.owner.username}">
+                        작성자
+                    </a>
+                </div>
+            </div>
+
+            <!-- 아스키 작품 미리보기 -->
+            <pre class="ascii-preview" th:text="${art.content}">미리보기</pre>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 공통: CSRF 토큰 꺼내기
+    function getCsrfToken() {
+        const cookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('XSRF-TOKEN='));
+        return cookie ? cookie.split('=')[1] : null;
+    }
+
+    // 상단 네비바 로그인 상태 세팅 (마이페이지와 동일 패턴)
+    async function setupNavbar() {
+        const area = document.getElementById("nav-user-area");
+
+        try {
+            const res = await fetch("/api/auth/me", {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!res.ok) {
+                // 비로그인 상태
+                area.innerHTML = `
+                    <a href="/login">로그인</a>
+                    <a href="/newbody">회원가입</a>
+                `;
+                return;
+            }
+
+            const text = await res.text();
+            const email = text.replace("현재 로그인한 사용자: ", "");
+
+            area.innerHTML = `
+                <span style="font-weight:bold;">${email}</span>
+                <button onclick="logout()">로그아웃</button>
+            `;
+        } catch (e) {
+            console.error(e);
+            area.innerHTML = `
+                <a href="/login">로그인</a>
+                <a href="/newbody">회원가입</a>
+            `;
+        }
+    }
+
+    // 로그아웃
+    async function logout() {
+        const token = getCsrfToken();
+
+        await fetch("/api/auth/logout", {
+            method: "POST",
+            headers: { "X-XSRF-TOKEN": token },
+            credentials: "include"
+        });
+
+        location.href = "/";
+    }
+
+    // "작품 만들기" 클릭 시: 403 대신 alert + 로그인 유도
+    async function goCreate() {
+        try {
+            const res = await fetch("/api/auth/me", {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!res.ok) {
+                alert("작품을 올리려면 로그인이 필요합니다.");
+                if (confirm("로그인 페이지로 이동할까요?")) {
+                    location.href = "/login";
+                }
+                return;
+            }
+
+            // 로그인 되어 있으면 작성 페이지로 이동
+            location.href = "/ascii/create";
+        } catch (e) {
+            console.error(e);
+            alert("서버와 통신 중 오류가 발생했습니다.");
+        }
+    }
+
+    window.addEventListener("load", setupNavbar);
+</script>
 
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MacGyver 사이트</title>
 
     <style>
@@ -13,7 +13,6 @@
             background: #f5f5f5;
         }
 
-        /* 상단 네비바 */
         .navbar {
             width: 100%;
             height: 60px;
@@ -31,53 +30,146 @@
             font-weight: bold;
         }
 
-        .navbar .nav-buttons a {
+        .nav-buttons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-buttons a, .nav-buttons button {
             color: white;
             text-decoration: none;
-            margin-left: 20px;
+            font-size: 15px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            background: #3a3a3a;
+            border: none;
+            cursor: pointer;
+        }
+
+        .nav-buttons a:hover, .nav-buttons button:hover {
+            background: #555;
+        }
+
+        .hero {
+            max-width: 900px;
+            margin: 60px auto 30px;
+            text-align: center;
+            padding: 0 16px;
+        }
+
+        .hero h1 {
+            font-size: 34px;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
             font-size: 16px;
+            color: #555;
+            margin-bottom: 28px;
         }
 
-        .navbar .nav-buttons a:hover {
-            text-decoration: underline;
+        .hero-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
         }
 
-        /* 메인 콘텐츠 */
-        .content {
-            margin-top: 50px;
+        .hero-buttons a {
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 999px;
+            font-size: 15px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            min-width: 200px;
             text-align: center;
         }
 
-        .content h1 {
-            font-size: 38px;
-            font-weight: bold;
+        .btn-primary {
+            background: #0066ff;
+            color: #fff;
         }
 
-        .content p {
-            margin-top: 15px;
-            font-size: 18px;
-            color: #666;
+        .btn-primary:hover {
+            background: #0050c1;
+        }
+
+        .btn-secondary {
+            background: #ffffff;
+            color: #333;
+            border: 1px solid #ccc;
+        }
+
+        .btn-secondary:hover {
+            background: #f0f0f0;
+        }
+
+        .section {
+            max-width: 900px;
+            margin: 20px auto 60px;
+            padding: 0 16px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .section pre.sample {
+            background: #111;
+            color: #0f0;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 12px;
+            white-space: pre;
+            overflow: auto;
         }
     </style>
 </head>
-
 <body>
 
 <div class="navbar">
     <div class="title">MacGyver 사이트</div>
+    <div class="nav-buttons" id="nav-user-area"></div>
+</div>
 
-    <div class="nav-buttons" id="nav-user-area">
-        <!-- JS가 로그인 상태에 따라 자동으로 채움 -->
+<div class="hero">
+    <h1>이미지와 텍스트를 ASCII 아트로</h1>
+    <p>
+        MacGyver 사이트는 텍스트/이미지 기반 ASCII 아트를 만들고 공유하는 작은 갤러리입니다.<br>
+        작품을 업로드하고, 다른 사람들의 ASCII 작품을 구경해보세요.
+    </p>
+
+    <div class="hero-buttons">
+        <a href="/ascii/list" class="btn-primary">🎨 ASCII 갤러리 보기</a>
+        <a href="/ascii/create" class="btn-secondary">✏️ 내 작품 업로드</a>
+        <!-- 나중에 추가할 이미지→ASCII 기능용 링크 (지금은 준비중 페이지로 연결해도 됨) -->
+        <a href="/asciiart" class="btn-secondary">🖼 이미지 → ASCII</a>
     </div>
 </div>
 
-<div class="content">
-    <h1>MacGyver 사이트에 오신 것을 환영합니다!</h1>
-    <p>여기는 계산기, 단위변환기, 아스키 아트 등 다양한 기능을 제공할 예정입니다.</p>
+<div class="section">
+    <h2>샘플 ASCII</h2>
+    <pre class="sample">
+  /\_/\
+ ( o.o )
+  > ^ <
+    </pre>
 </div>
+
 <script>
-    async function checkLoginStatus() {
+    async function setupNavbar() {
         const area = document.getElementById("nav-user-area");
+        const path = window.location.pathname;
+
+        if (path === "/login" || path === "/newbody") {
+            area.innerHTML = `<a href="/">홈으로</a>`;
+            return;
+        }
 
         try {
             const res = await fetch("/api/auth/me", {
@@ -85,25 +177,16 @@
                 credentials: "include"
             });
 
-            if (!res.ok) throw new Error();  // 로그인 안된 경우 catch로 이동
+            if (!res.ok) throw new Error();
 
             const text = await res.text();
             const email = text.replace("현재 로그인한 사용자: ", "");
 
-            // 로그인 상태 UI
             area.innerHTML = `
-                <span style="margin-right: 15px; font-weight: bold;">${email} 님</span>
-                <button onclick="logout()" style="
-                    background:#ff6060;
-                    border:none;
-                    color:white;
-                    padding:6px 10px;
-                    border-radius:5px;
-                    cursor:pointer;
-                ">로그아웃</button>
+                <span style="font-weight:bold;">${email}</span>
+                <button onclick="logout()">로그아웃</button>
             `;
         } catch (e) {
-            // 비로그인 상태 UI
             area.innerHTML = `
                 <a href="/login">로그인</a>
                 <a href="/newbody">회원가입</a>
@@ -111,24 +194,27 @@
         }
     }
 
-async function logout() {
-    const token = document.cookie
-        .split("; ")
-        .find(v => v.startsWith("XSRF-TOKEN="))
-        ?.split("=")[1];
+    function getCsrfTokenFromCookie() {
+        const cookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('XSRF-TOKEN='));
+        return cookie ? cookie.split('=')[1] : null;
+    }
 
-    await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: {
-            "X-XSRF-TOKEN": token
-        },
-        credentials: "include"
-    });
+    async function logout() {
+        const token = getCsrfTokenFromCookie();
 
-    location.href = "/";
-}
+        await fetch("/api/auth/logout", {
+            method: "POST",
+            headers: { "X-XSRF-TOKEN": token },
+            credentials: "include"
+        });
 
-    window.onload = checkLoginStatus;
+        location.href = "/";
+    }
+
+    window.onload = setupNavbar;
 </script>
+
 </body>
 </html>

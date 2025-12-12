@@ -97,25 +97,18 @@
         csrfHeader = data.headerName;
     }
 
-    async function sendCode() {
-        const email = document.getElementById("email").value;
+async function sendCode() {
+    const email = document.getElementById("email").value.trim();
 
-        const res = await fetch(`/api/auth/login/send-code?email=${email}`, {
-            method: "POST",
-            headers: {
-                [csrfHeader]: csrfToken
-            },
-            credentials: "include"
-        });
-
-        alert(await res.text());
+    if (!email) {
+        alert("이메일을 입력해주세요.");
+        return;
     }
 
-    async function verifyLogin() {
-        const email = document.getElementById("email").value;
-        const code = document.getElementById("code").value;
+    alert("로그인용 인증번호 전송을 요청했습니다.\n메일이 도착하는 데 1~2분 정도 걸릴 수 있습니다.");
 
-        const res = await fetch(`/api/auth/login/verify?email=${email}&code=${code}`, {
+    try {
+        const res = await fetch(`/api/auth/login/send-code?email=${encodeURIComponent(email)}`, {
             method: "POST",
             headers: {
                 [csrfHeader]: csrfToken
@@ -125,13 +118,55 @@
 
         const text = await res.text();
 
+        if (!res.ok) {
+            alert(text || "인증번호 전송에 실패했습니다.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("서버 통신 중 오류가 발생했습니다.");
+    }
+}
+
+    async function verifyLogin() {
+    const email = document.getElementById("email").value.trim();
+    const code  = document.getElementById("code").value.trim();
+
+    if (!email) {
+        alert("이메일을 입력해주세요.");
+        return;
+    }
+    if (!code) {
+        alert("인증번호를 입력해주세요.");
+        return;
+    }
+
+    try {
+        const res = await fetch(
+            `/api/auth/login/verify?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`,
+            {
+                method: "POST",
+                headers: {
+                    [csrfHeader]: csrfToken
+                },
+                credentials: "include"
+            }
+        );
+
+        const text = await res.text();
+
         if (res.ok) {
-            alert(text);
+            // MemberService.logincode() 성공 시
+            alert(text || "로그인 되었습니다.");
             window.location.href = "/";
         } else {
-            alert(text);
+            // 코드 틀림 / 만료 / 기타 로그인 실패
+            alert(text || "로그인에 실패했습니다.\n이메일 또는 인증번호를 다시 확인해주세요.");
         }
+    } catch (e) {
+        console.error(e);
+        alert("서버 통신 중 오류가 발생했습니다.");
     }
+}
 
     async function setupNavbar() {
         const area = document.getElementById("nav-user-area");

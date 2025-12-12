@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${isMyPage} ? '내 작품 목록' : ${owner.username} + '님의 작품'">ASCII 마이페이지</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .navbar {
+            width: 100%;
+            height: 60px;
+            background: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            margin: -20px -20px 20px -20px;
+        }
+
+        .navbar .title a {
+            color: white;
+            text-decoration: none;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .navbar .title a:hover {
+            text-decoration: underline;
+        }
+
+        .nav-buttons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-buttons a,
+        .nav-buttons button {
+            color: white;
+            text-decoration: none;
+            font-size: 15px;
+            padding: 6px 10px;
+            border-radius: 5px;
+            background: #3a3a3a;
+            border: none;
+            cursor: pointer;
+        }
+
+        .nav-buttons a:hover,
+        .nav-buttons button:hover {
+            background: #555;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .owner-info {
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .top-actions {
+            margin-bottom: 15px;
+        }
+
+        .ascii-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .ascii-item {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 10px 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+        .ascii-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .ascii-title {
+            font-weight: bold;
+        }
+
+        .ascii-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .ascii-preview {
+            margin-top: 6px;
+            background: #111;
+            color: #0f0;
+            border-radius: 4px;
+            padding: 6px;
+            font-family: "Consolas", "Courier New", monospace;
+            font-size: 11px;
+            line-height: 1.1;
+            white-space: pre;
+            max-height: 200px;
+            overflow: auto;
+        }
+
+        .actions a {
+            font-size: 12px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <div class="title">
+        <a href="/">MacGyver 사이트</a>
+    </div>
+    <div class="nav-buttons" id="nav-user-area"></div>
+</div>
+
+<h1 th:text="${isMyPage} ? '내 ASCII 작품' : ${owner.username} + '님의 ASCII 작품'">제목</h1>
+
+<div class="owner-info">
+    <span th:if="${isMyPage}">
+        내 이메일: <span th:text="${owner.email}">이메일</span>
+    </span>
+    <span th:if="${!isMyPage}">
+        닉네임: <span th:text="${owner.username}">닉네임</span>
+    </span>
+</div>
+
+<div class="top-actions">
+    <a th:href="@{/ascii/list}">← 전체 목록으로</a>
+    <span th:if="${isMyPage}">
+        | <a th:href="@{/ascii/create}">새 작품 만들기</a>
+    </span>
+</div>
+
+<div th:if="${#lists.isEmpty(asciiList)}">
+    <span th:if="${isMyPage}">
+        아직 등록한 작품이 없습니다. 첫 작품을 만들어보세요!
+    </span>
+    <span th:if="${!isMyPage}">
+        아직 공개된 작품이 없습니다.
+    </span>
+</div>
+
+<div th:if="${!#lists.isEmpty(asciiList)}" class="ascii-list">
+
+    <div class="ascii-item" th:each="art : ${asciiList}">
+        <div class="ascii-header">
+            <div class="ascii-title">
+                <a th:href="@{|/ascii/detail/${art.id}|}"
+                   th:text="${art.subject}">제목</a>
+            </div>
+            <div class="ascii-meta">
+                <span th:text="${art.public} ? '공개' : '비공개'">공개여부</span>
+            </div>
+        </div>
+
+        <pre class="ascii-preview"
+             th:text="${art.content}">미리보기</pre>
+
+        <!-- 내 페이지일 때만 수정/삭제 버튼 노출 -->
+        <div class="actions" th:if="${isMyPage}">
+            <a th:href="@{|/ascii/modify/${art.id}|}">수정</a>
+            |
+            <a th:href="@{|/ascii/delete/${art.id}|}"
+               onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function getCsrfToken() {
+        const cookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('XSRF-TOKEN='));
+
+        return cookie ? cookie.split('=')[1] : null;
+    }
+
+    async function setupNavbar() {
+        const area = document.getElementById("nav-user-area");
+
+        try {
+            const res = await fetch("/api/auth/me", {
+                method: "GET",
+                credentials: "include"
+            });
+
+            if (!res.ok) throw new Error();
+
+            const text = await res.text();
+            const email = text.replace("현재 로그인한 사용자: ", "");
+
+            area.innerHTML = `
+                <span style="font-weight:bold;">${email}</span>
+                <button onclick="logout()">로그아웃</button>
+            `;
+        } catch (e) {
+            area.innerHTML = `
+                <a href="/login">로그인</a>
+                <a href="/newbody">회원가입</a>
+            `;
+        }
+    }
+
+    async function logout() {
+        const token = getCsrfToken();
+
+        await fetch("/api/auth/logout", {
+            method: "POST",
+            headers: { "X-XSRF-TOKEN": token },
+            credentials: "include"
+        });
+
+        location.href = "/";
+    }
+
+    window.addEventListener("load", setupNavbar);
+</script>
+
+</body>
+</html>
