@@ -7,23 +7,9 @@
     <style>
         body {
             margin: 0;
-            padding: 20px;
+            padding: 0;
             font-family: Arial, sans-serif;
             background: #f5f5f5;
-        }
-
-        /* ───── 네비바 (마이페이지와 동일 스타일) ───── */
-        .navbar {
-            width: 100%;
-            height: 60px;
-            background: #222;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            box-sizing: border-box;
-            margin: -20px -20px 20px -20px;
         }
 
         .navbar .title a {
@@ -60,10 +46,11 @@
             background: #555;
         }
 
-        /* ───── 메인 영역 ───── */
         .container {
             max-width: 900px;
             margin: 0 auto 40px;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         h1 {
@@ -184,13 +171,8 @@
 </head>
 <body>
 
-<!-- ───── 상단 네비바 ───── -->
-<div class="navbar">
-    <div class="title">
-        <a href="/">MacGyver 사이트</a>
-    </div>
-    <div class="nav-buttons" id="nav-user-area"></div>
-</div>
+
+<div th:replace="~{navbar :: navbar}"></div>
 
 <div class="container">
     <h1>ASCII 작품 목록</h1>
@@ -204,8 +186,8 @@
         </div>
         <div>
             <!-- 로그인 체크 후 이동하는 버튼 -->
-            <button type="button" class="btn-primary" onclick="goCreate()">✏ 작품 만들기</button>
-            <a href="/asciiart" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
+            <a href="/ascii/create" class="btn-primary" onclick="return goCreate(event)">✏ 작품 만들기</a>
+            <a th:href="@{/asciiart}" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
         </div>
     </div>
 
@@ -239,89 +221,26 @@
     </div>
 </div>
 
-<script>
-    // 공통: CSRF 토큰 꺼내기
-    function getCsrfToken() {
-        const cookie = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('XSRF-TOKEN='));
-        return cookie ? cookie.split('=')[1] : null;
-    }
-
-    // 상단 네비바 로그인 상태 세팅 (마이페이지와 동일 패턴)
-    async function setupNavbar() {
-        const area = document.getElementById("nav-user-area");
-
-        try {
-            const res = await fetch("/api/auth/me", {
-                method: "GET",
-                credentials: "include"
-            });
-
-            if (!res.ok) {
-                // 비로그인 상태
-                area.innerHTML = `
-                    <a href="/login">로그인</a>
-                    <a href="/newbody">회원가입</a>
-                `;
-                return;
-            }
-
-            const text = await res.text();
-            const email = text.replace("현재 로그인한 사용자: ", "");
-
-            area.innerHTML = `
-                <span style="font-weight:bold;">${email}</span>
-                <button onclick="logout()">로그아웃</button>
-            `;
-        } catch (e) {
-            console.error(e);
-            area.innerHTML = `
-                <a href="/login">로그인</a>
-                <a href="/newbody">회원가입</a>
-            `;
-        }
-    }
-
-    // 로그아웃
-    async function logout() {
-        const token = getCsrfToken();
-
-        await fetch("/api/auth/logout", {
-            method: "POST",
-            headers: { "X-XSRF-TOKEN": token },
-            credentials: "include"
-        });
-
-        location.href = "/";
-    }
-
-    // "작품 만들기" 클릭 시: 403 대신 alert + 로그인 유도
-    async function goCreate() {
-        try {
-            const res = await fetch("/api/auth/me", {
-                method: "GET",
-                credentials: "include"
-            });
-
-            if (!res.ok) {
-                alert("작품을 올리려면 로그인이 필요합니다.");
-                if (confirm("로그인 페이지로 이동할까요?")) {
-                    location.href = "/login";
-                }
-                return;
-            }
-
-            // 로그인 되어 있으면 작성 페이지로 이동
-            location.href = "/ascii/create";
-        } catch (e) {
-            console.error(e);
-            alert("서버와 통신 중 오류가 발생했습니다.");
-        }
-    }
-
-    window.addEventListener("load", setupNavbar);
-</script>
-
 </body>
+<script>
+    async function goCreate(e) {
+      e.preventDefault();
+
+      try {
+        const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
+
+        if (!res.ok) {
+          alert("작품을 올리려면 로그인이 필요합니다.");
+          location.href = "/login";
+          return false;
+        }
+
+        location.href = "/ascii/create";
+        return false;
+      } catch (err) {
+        alert("서버와 통신 중 오류가 발생했습니다.");
+        return false;
+      }
+    }
+</script>
 </html>

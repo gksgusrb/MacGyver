@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<body>
+<div th:fragment="navbar">
+
+    <div class="navbar">
+        <div class="title"><a href="/">MacGyver 사이트</a></div>
+        <div class="nav-buttons" id="nav-user-area"></div>
+    </div>
+
+    <style>
+        .navbar {
+            width: 100%;
+            height: 60px;
+            background: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;          /* ✅ 로고가 구석으로 안 감 */
+            box-sizing: border-box;
+        }
+        .navbar .title a {
+            color: white;
+            text-decoration: none;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .nav-buttons {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .nav-buttons a, .nav-buttons button {
+            color: white;
+            text-decoration: none;
+            font-size: 15px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            background: #3a3a3a;
+            border: none;
+            cursor: pointer;
+        }
+        .nav-buttons a:hover, .nav-buttons button:hover {
+            background: #555;
+        }
+    </style>
+
+    <script>
+        async function setupNavbar() {
+            const area = document.getElementById("nav-user-area");
+            const path = window.location.pathname;
+
+            if (path === "/login" || path === "/newbody") {
+                area.innerHTML = `<a href="/">홈으로</a>`;
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
+                if (!res.ok) throw new Error();
+                const text = await res.text();
+                const email = text.replace("현재 로그인한 사용자: ", "");
+
+                area.innerHTML = `
+                    <span style="font-weight:bold;">${email}</span>
+                    <button onclick="logout()">로그아웃</button>
+                `;
+            } catch (e) {
+                area.innerHTML = `
+                    <a href="/login">로그인</a>
+                    <a href="/newbody">회원가입</a>
+                `;
+            }
+        }
+
+        function getCsrfTokenFromCookie() {
+            const cookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
+            return cookie ? cookie.split('=')[1] : null;
+        }
+
+        async function logout() {
+            const token = getCsrfTokenFromCookie();
+            await fetch("/api/auth/logout", {
+                method: "POST",
+                headers: { "X-XSRF-TOKEN": token },
+                credentials: "include"
+            });
+            location.href = "/";
+        }
+
+        window.addEventListener("load", setupNavbar);
+    </script>
+
+</div>
+</body>
+</html>

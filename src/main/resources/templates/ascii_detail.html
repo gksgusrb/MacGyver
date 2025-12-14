@@ -58,15 +58,7 @@
 </head>
 <body>
 
-<div class="navbar">
-    <div class="title">
-        <a href="/" style="color:white; text-decoration:none;">MacGyver 사이트</a>
-    </div>
-
-    <div class="nav-buttons" id="nav-user-area">
-        <!-- JS가 로그인 상태에 따라 자동으로 채움 -->
-    </div>
-</div>
+<div th:replace="~{navbar :: navbar}"></div>
 
 <div class="content">
     <a th:href="@{/ascii/list}">← 목록으로</a>
@@ -74,9 +66,13 @@
     <h1 th:text="${ascii.subject}">제목</h1>
 
     <p>
-        <a th:href="@{|/ascii/modify/${ascii.id}|}">수정</a>
+        <a th:href="@{|/ascii/modify/${ascii.id}|}"
+           th:attr="data-owner-email=${ascii.owner.email}"
+           onclick="return goAuth(event, this)">수정</a>
         |
-        <a th:href="@{|/ascii/delete/${ascii.id}|}">삭제</a>
+        <a th:href="@{|/ascii/delete/${ascii.id}|}"
+           th:attr="data-owner-email=${ascii.owner.email}"
+           onclick="return goAuth(event, this)">삭제</a>
     </p>
 
     <p>
@@ -96,60 +92,49 @@
     <pre th:text="${ascii.content}">내용</pre>
 </div>
 
-<script>
-    async function checkLoginStatus() {
-        const area = document.getElementById("nav-user-area");
 
-        try {
-            const res = await fetch("/api/auth/me", {
-                method: "GET",
-                credentials: "include"
-            });
-
-            if (!res.ok) throw new Error();
-
-            const text = await res.text();
-            const email = text.replace("현재 로그인한 사용자: ", "");
-
-            area.innerHTML = `
-                <span style="margin-right: 15px; font-weight: bold;">${email} 님</span>
-                <a href="/ascii/my" style="margin-right: 10px; color:white; text-decoration:none;">내 작품</a>
-                <button onclick="logout()" style="
-                    background:#ff6060;
-                    border:none;
-                    color:white;
-                    padding:6px 10px;
-                    border-radius:5px;
-                    cursor:pointer;
-                ">로그아웃</button>
-            `;
-        } catch (e) {
-            area.innerHTML = `
-                <a href="/login">로그인</a>
-                <a href="/newbody">회원가입</a>
-            `;
-        }
-    }
-
-    async function logout() {
-        const token = document.cookie
-            .split("; ")
-            .find(v => v.startsWith("XSRF-TOKEN="))
-            ?.split("=")[1];
-
-        await fetch("/api/auth/logout", {
-            method: "POST",
-            headers: {
-                "X-XSRF-TOKEN": token
-            },
-            credentials: "include"
-        });
-
-        location.href = "/";
-    }
-
-    window.onload = checkLoginStatus;
-</script>
 
 </body>
+<script>
+    async function goAuth(e, el) {
+      e.preventDefault();
+
+      const url = el.getAttribute("href");
+      const ownerEmail = (el.dataset.ownerEmail || "").trim();
+
+      // 삭제 confirm
+      if (url.includes("/delete/")) {
+        if (!confirm("정말 삭제하시겠습니까?")) return false;
+      }
+
+      try {
+        //로그인 체크
+        const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
+
+        if (!res.ok) {
+          alert("로그인이 필요합니다.");
+          location.href = "/login";
+          return false;
+        }
+
+        //내 이메일 파싱
+        const text = await res.text();
+        const myEmail = text.replace("현재 로그인한 사용자: ", "").trim();
+
+        //권한 체크 (작성자만)
+        if (ownerEmail && myEmail !== ownerEmail) {
+          alert("권한이 없습니다. (작성자만 가능합니다)");
+          return false;
+        }
+
+        // 통과하면 이동
+        location.href = url;
+        return false;
+      } catch (err) {
+        alert("서버와 통신 중 오류가 발생했습니다.");
+        return false;
+      }
+    }
+</script>
+
 </html>
