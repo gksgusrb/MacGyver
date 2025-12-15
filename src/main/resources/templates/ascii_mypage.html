@@ -2,20 +2,28 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${isMyPage} ? '내 작품 목록' : ${owner.username} + '님의 작품'">ASCII 마이페이지</title>
+    <title>ASCII 작품 목록 | MacGyver</title>
 
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             font-family: Arial, sans-serif;
             background: #f5f5f5;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto 40px;
-            padding: 20px;
+
+        /* ───── 네비바 ───── */
+        .navbar {
+            width: 100%;
+            height: 60px;
+            background: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
             box-sizing: border-box;
+            margin: -20px -20px 20px -20px;
         }
 
         .navbar .title a {
@@ -52,23 +60,87 @@
             background: #555;
         }
 
+        /* ───── 메인 영역 ───── */
+        .container {
+            max-width: 900px;
+            margin: 0 auto 40px;
+        }
+
         h1 {
             margin-bottom: 5px;
         }
 
-        .owner-info {
+        .sub-text {
+            color: #666;
+            font-size: 14px;
             margin-bottom: 15px;
-            color: #555;
         }
 
         .top-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 15px;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
+        .btn-primary,
+        .btn-secondary {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0069d9;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .empty-message {
+            margin-top: 20px;
+            color: #777;
+        }
+
+        /* ───── 검색/정렬 영역 ───── */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 10px 0 20px;
+        }
+
+        .search-bar input[type="text"] {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            min-width: 240px;
+        }
+
+        /* ───── 리스트 카드 ───── */
         .ascii-list {
             display: flex;
             flex-direction: column;
             gap: 15px;
+            margin-top: 10px;
         }
 
         .ascii-item {
@@ -83,15 +155,33 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 6px;
+            gap: 10px;
         }
 
-        .ascii-title {
+        .ascii-title a {
             font-weight: bold;
+            font-size: 16px;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .ascii-title a:hover {
+            text-decoration: underline;
         }
 
         .ascii-meta {
             font-size: 12px;
             color: #666;
+            white-space: nowrap;
+        }
+
+        .ascii-meta a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .ascii-meta a:hover {
+            text-decoration: underline;
         }
 
         .ascii-preview {
@@ -108,9 +198,31 @@
             overflow: auto;
         }
 
-        .actions a {
-            font-size: 12px;
-            margin-left: 8px;
+        /* ───── 페이징 ───── */
+        .paging {
+            margin-top: 22px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .page-btn:hover { background: #5a6268; }
+
+        .page-btn.active {
+            font-weight: bold;
+            border: 2px solid #333;
+            background: #495057;
         }
     </style>
 </head>
@@ -118,56 +230,80 @@
 
 <div th:replace="~{navbar :: navbar}"></div>
 
-<h1 th:text="${isMyPage} ? '내 ASCII 작품' : ${owner.username} + '님의 ASCII 작품'">제목</h1>
+<div class="container">
+    <h1>ASCII 작품 목록</h1>
+    <div class="sub-text">
+        전 세계의 ASCII 작품들을 구경해보세요 ✨
+    </div>
 
-<div class="owner-info">
-    <span th:if="${isMyPage}">
-        내 이메일: <span th:text="${owner.email}">이메일</span>
-    </span>
-    <span th:if="${!isMyPage}">
-        닉네임: <span th:text="${owner.username}">닉네임</span>
-    </span>
-</div>
-
-<div class="top-actions">
-    <a th:href="@{/ascii/list}">← 전체 목록으로</a>
-    <span th:if="${isMyPage}">
-        | <a th:href="@{/ascii/create}">새 작품 만들기</a>
-    </span>
-</div>
-
-<div th:if="${#lists.isEmpty(asciiList)}">
-    <span th:if="${isMyPage}">
-        아직 등록한 작품이 없습니다. 첫 작품을 만들어보세요!
-    </span>
-    <span th:if="${!isMyPage}">
-        아직 공개된 작품이 없습니다.
-    </span>
-</div>
-
-<div th:if="${!#lists.isEmpty(asciiList)}" class="ascii-list">
-
-    <div class="ascii-item" th:each="art : ${asciiList}">
-        <div class="ascii-header">
-            <div class="ascii-title">
-                <a th:href="@{|/ascii/detail/${art.id}|}"
-                   th:text="${art.subject}">제목</a>
-            </div>
-            <div class="ascii-meta">
-                <span th:text="${art.public} ? '공개' : '비공개'">공개여부</span>
-            </div>
+    <div class="top-actions">
+        <div></div>
+        <div>
+            <a th:href="@{/ascii/create}" class="btn-primary">✏ 작품 만들기</a>
+            <a th:href="@{/asciiart}" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
         </div>
+    </div>
 
-        <pre class="ascii-preview"
-             th:text="${art.content}">미리보기</pre>
+    <!-- 검색/정렬 -->
+    <form class="search-bar" th:action="@{/ascii/list}" method="get">
+        <input type="text" name="kw" placeholder="검색 (제목/내용/작성자)" th:value="${kw}"/>
 
-        <!-- 내 페이지일 때만 수정/삭제 버튼 노출 -->
-        <div class="actions" th:if="${isMyPage}">
-            <a th:href="@{|/ascii/modify/${art.id}|}">수정</a>
-            |
-            <a th:href="@{|/ascii/delete/${art.id}|}"
-               onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+        <input type="hidden" name="sort" th:value="${sort}">
+        <input type="hidden" name="dir" th:value="${dir}">
+
+        <button type="submit" class="btn-secondary">검색</button>
+
+        <!-- 정렬(페이지는 0으로 리셋) -->
+        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='createDate', dir='desc')}">최신순</a>
+        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='createDate', dir='asc')}">오래된순</a>
+        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='subject', dir='asc')}">제목 A→Z</a>
+        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='subject', dir='desc')}">제목 Z→A</a>
+    </form>
+
+    <!-- 비었을 때 -->
+    <div th:if="${paging.totalElements == 0}" class="empty-message">
+        아직 공개된 작품이 없습니다. 첫 작품의 주인이 되어보세요!
+    </div>
+
+    <!-- 있을 때 -->
+    <div th:if="${paging.totalElements > 0}" class="ascii-list">
+        <div class="ascii-item" th:each="art : ${paging.content}">
+            <div class="ascii-header">
+                <div class="ascii-title">
+                    <a th:href="@{|/ascii/detail/${art.id}|}"
+                       th:text="${art.subject}">제목</a>
+                </div>
+                <div class="ascii-meta">
+                    by
+                    <a th:href="@{|/ascii/user/${art.owner.id}|}"
+                       th:text="${art.owner.username}">작성자</a>
+                </div>
+            </div>
+
+            <pre class="ascii-preview" th:text="${art.content}">미리보기</pre>
         </div>
+    </div>
+
+    <!-- 페이징 -->
+    <div class="paging" th:if="${paging.totalPages > 1}">
+        <a class="page-btn"
+           th:if="${paging.hasPrevious()}"
+           th:href="@{/ascii/list(page=${paging.number-1}, kw=${kw}, sort=${sort}, dir=${dir})}">
+            이전
+        </a>
+
+        <a class="page-btn"
+           th:each="p : ${#numbers.sequence(0, paging.totalPages-1)}"
+           th:href="@{/ascii/list(page=${p}, kw=${kw}, sort=${sort}, dir=${dir})}"
+           th:text="${p+1}"
+           th:classappend="${p == paging.number} ? ' active' : ''">
+        </a>
+
+        <a class="page-btn"
+           th:if="${paging.hasNext()}"
+           th:href="@{/ascii/list(page=${paging.number+1}, kw=${kw}, sort=${sort}, dir=${dir})}">
+            다음
+        </a>
     </div>
 
 </div>

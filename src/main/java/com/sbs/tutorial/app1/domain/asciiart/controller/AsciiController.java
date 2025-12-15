@@ -5,8 +5,10 @@ import com.sbs.tutorial.app1.domain.asciiart.form.Asciiform;
 import com.sbs.tutorial.app1.domain.asciiart.service.AsciiService;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
 import com.sbs.tutorial.app1.domain.member.service.MemberService;
+import exception.DataNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
@@ -16,8 +18,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.util.List;
+import java.util.zip.DataFormatException;
 
 @RequestMapping("/ascii")
 @RequiredArgsConstructor
@@ -28,9 +33,19 @@ public class AsciiController {
     private final AsciiService asciiService;
 //작품목록 비로그인 도 확인가능
     @GetMapping("/list")
-    public String list(Model model) {
-        List<Ascii> asciiList = asciiService.getAllPublicList();
-        model.addAttribute("asciiList", asciiList);
+    public String list(Model model,
+                       @RequestParam(value = "page", defaultValue = "0") int page,
+                       @RequestParam(value = "kw", defaultValue = "") String kw,
+                       @RequestParam(value = "sort", defaultValue = "createDate") String sort,
+                       @RequestParam(value = "dir", defaultValue = "desc") String dir) {
+
+        Page<Ascii> paging = asciiService.getPublicList(page, kw, sort, dir);
+
+        model.addAttribute("paging", paging);
+        model.addAttribute("kw", kw);
+        model.addAttribute("sort", sort);
+        model.addAttribute("dir", dir);
+
         return "ascii_list";
     }
     //작품상세
@@ -111,7 +126,7 @@ public class AsciiController {
         return String.format("redirect:/ascii/detail/%d", id);
     }
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String delete(@PathVariable("id") Integer id,
                          Principal principal,
                          @RequestHeader(value = "Referer", required = false) String referer) {
@@ -142,46 +157,62 @@ public class AsciiController {
             } catch (Exception ignored) {}
         }
 
-
         return "redirect:/ascii/my";
     }
+   //삭제된 글 뒤로가기 시 404 페이지대신 뒤로가서 보여주기
+   @ExceptionHandler(DataNotFoundException.class)
+   public String handleAsciiNotFound(DataNotFoundException e) {
+       return redirectAlert("이미 삭제되었거나 존재하지 않는 작품입니다.", "/ascii/list");
+   }
+    private String redirectAlert (String msg, String next) {
+        String m = URLEncoder.encode(msg, StandardCharsets.UTF_8);
+        String n = URLEncoder.encode(next, StandardCharsets.UTF_8);
+        return "redirect:/alert?msg=" + m + "&next=" + n;
+    }
+
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/my")
-    public String myPage(Model model, Principal principal) {
+    public String myPage(Model model,
+                         Principal principal,
+                         @RequestParam(value = "page", defaultValue = "0") int page,
+                         @RequestParam(value = "kw", defaultValue = "") String kw,
+                         @RequestParam(value = "sort", defaultValue = "createDate") String sort,
+                         @RequestParam(value = "dir", defaultValue = "desc") String dir) {
 
         Member me = memberService.getMemberByEmail(principal.getName());
-
-        List<Ascii> asciiList = asciiService.getMyList(me);
+        Page<Ascii> paging = asciiService.getMyPage(me, page, kw, sort, dir);
 
         model.addAttribute("owner", me);
-        model.addAttribute("asciiList", asciiList);
-        model.addAttribute("isMyPage", true); // 템플릿에서 사용
+        model.addAttribute("paging", paging);
+        model.addAttribute("kw", kw);
+        model.addAttribute("sort", sort);
+        model.addAttribute("dir", dir);
+        model.addAttribute("isMyPage", true);
 
         return "ascii_mypage";
     }
     @GetMapping("/user/{memberId}")
     public String userPage(Model model,
                            @PathVariable("memberId") Long memberId,
-                           Principal principal) {
+                           Principal principal,
+                           @RequestParam(value = "page", defaultValue = "0") int page,
+                           @RequestParam(value = "kw", defaultValue = "") String kw,
+                           @RequestParam(value = "sort", defaultValue = "createDate") String sort,
+                           @RequestParam(value = "dir", defaultValue = "desc") String dir) {
 
         Member owner = memberService.getMemberById(memberId);
 
-        boolean isOwner = false;
-        if (principal != null) {
-            isOwner = owner.getEmail().equals(principal.getName());
-        }
+        boolean isOwner = principal != null && owner.getEmail().equals(principal.getName());
 
-        List<Ascii> asciiList;
-        if (isOwner) {
-            // 내가 나 자신의 페이지를 보는 경우 → 전체
-            asciiList = asciiService.getMyList(owner);
-        } else {
-            // 다른 사람이 보는 경우 → 공개 작품만
-            asciiList = asciiService.getPublicListByOwner(owner);
-        }
+        Page<Ascii> paging = isOwner
+                ? asciiService.getMyPage(owner, page, kw, sort, dir)          // 내 글 전체(공개+비공개)
+                : asciiService.getUserPublicPage(owner, page, kw, sort, dir); // 남의 글(공개만)
 
         model.addAttribute("owner", owner);
-        model.addAttribute("asciiList", asciiList);
+        model.addAttribute("paging", paging);
+        model.addAttribute("kw", kw);
+        model.addAttribute("sort", sort);
+        model.addAttribute("dir", dir);
         model.addAttribute("isMyPage", isOwner);
 
         return "ascii_mypage";

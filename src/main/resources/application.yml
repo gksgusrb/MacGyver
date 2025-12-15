@@ -6,6 +6,9 @@ spring:
   data:
     redis:
 
+  servlet:
+    session:
+      tineout: 15m #15분동안 비활동하면 세션 아웃
 
   profiles:
     active: dev

@@ -26,6 +26,7 @@ public class SecurityConfig {
 
                         )
                 )
+
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers( //로그인없이 접근 가능한 리소스들
                                 "/",
@@ -44,6 +45,30 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
 
                 )
+                .exceptionHandling(ex -> ex
+                        // 로그인 안 한 사람이 보호 자원 접근 시
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            String uri = request.getRequestURI();
+                            if (uri.startsWith("/api/")) {
+                                response.sendError(401);
+                                return;
+                            }
+
+                            response.sendRedirect("/alert?msg=로그인이%20필요합니다.&next=/login");
+                        })
+                        // 로그인은 했는데 권한이 없을 때(남의 글 수정/삭제 등)
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            String uri = request.getRequestURI();
+
+                            if (uri.startsWith("/api/")) {
+                                response.sendError(403);
+                                return;
+                            }
+                            // 목록으로 보내기
+                            response.sendRedirect("/alert?msg=권한이%20없습니다.&next=/ascii/list");
+                        })
+                )
+
 
 
                 // 일반적 로그인 기능이 작동하지않아 정보또한 자동 저장하지않아 직접 설정함
@@ -63,6 +88,7 @@ public class SecurityConfig {
                         .clearAuthentication(true) //Authentication 도 제거
                         .deleteCookies("JSESSIONID", "XSRF-TOKEN") //쿠키 제거
                 );
+
         return http.build();
     }
 }

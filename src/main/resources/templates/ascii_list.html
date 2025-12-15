@@ -7,9 +7,23 @@
     <style>
         body {
             margin: 0;
-            padding: 0;
+            padding: 20px;
             font-family: Arial, sans-serif;
             background: #f5f5f5;
+        }
+
+        /* ───── 네비바 ───── */
+        .navbar {
+            width: 100%;
+            height: 60px;
+            background: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            margin: -20px -20px 20px -20px;
         }
 
         .navbar .title a {
@@ -46,11 +60,10 @@
             background: #555;
         }
 
+        /* ───── 메인 영역 ───── */
         .container {
             max-width: 900px;
             margin: 0 auto 40px;
-            padding: 20px;
-            box-sizing: border-box;
         }
 
         h1 {
@@ -76,7 +89,7 @@
         .btn-secondary {
             display: inline-block;
             padding: 8px 14px;
-            border-radius: 4px;
+            border-radius: 6px;
             text-decoration: none;
             border: none;
             cursor: pointer;
@@ -106,7 +119,23 @@
             color: #777;
         }
 
-        /* ───── 리스트 카드 (마이페이지 카드 스타일과 비슷하게) ───── */
+        /* ───── 검색/정렬 영역 ───── */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 10px 0 20px;
+        }
+
+        .search-bar input[type="text"] {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            min-width: 240px;
+        }
+
+        /* ───── 리스트 카드 ───── */
         .ascii-list {
             display: flex;
             flex-direction: column;
@@ -126,6 +155,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 6px;
+            gap: 10px;
         }
 
         .ascii-title a {
@@ -142,6 +172,7 @@
         .ascii-meta {
             font-size: 12px;
             color: #666;
+            white-space: nowrap;
         }
 
         .ascii-meta a {
@@ -153,7 +184,6 @@
             text-decoration: underline;
         }
 
-        /* ───── 아스키 내용 미리보기 (마이페이지랑 톤만 살짝 다르게) ───── */
         .ascii-preview {
             margin-top: 6px;
             background: #111;
@@ -167,10 +197,36 @@
             max-height: 200px;
             overflow: auto;
         }
+
+        /* ───── 페이징 ───── */
+        .paging {
+            margin-top: 22px;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .page-btn:hover { background: #5a6268; }
+
+        .page-btn.active {
+            font-weight: bold;
+            border: 2px solid #333;
+            background: #495057;
+        }
     </style>
 </head>
 <body>
-
 
 <div th:replace="~{navbar :: navbar}"></div>
 
@@ -181,66 +237,76 @@
     </div>
 
     <div class="top-actions">
+        <div></div>
         <div>
-            <!-- 왼쪽 설명 추가해도 되고 비워둬도 됨 -->
-        </div>
-        <div>
-            <!-- 로그인 체크 후 이동하는 버튼 -->
-            <a href="/ascii/create" class="btn-primary" onclick="return goCreate(event)">✏ 작품 만들기</a>
+            <a th:href="@{/ascii/create}" class="btn-primary">✏ 작품 만들기</a>
             <a th:href="@{/asciiart}" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
         </div>
     </div>
 
-    <!-- 작품 없을 때 -->
-    <div th:if="${#lists.isEmpty(asciiList)}" class="empty-message">
+    <!-- 검색/정렬 -->
+    <form class="search-bar" th:action="@{/ascii/list}" method="get">
+        <input type="text" name="kw" placeholder="검색 (제목/내용/작성자)" th:value="${kw}"/>
+
+        <input type="hidden" name="sort" th:value="${sort}">
+        <input type="hidden" name="dir" th:value="${dir}">
+
+        <button type="submit" class="btn-secondary">검색</button>
+
+        <!-- 정렬(페이지는 0으로 리셋) -->
+        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='createDate', dir='desc')}">최신순</a>
+        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='createDate', dir='asc')}">오래된순</a>
+        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='subject', dir='asc')}">제목 A→Z</a>
+        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='subject', dir='desc')}">제목 Z→A</a>
+    </form>
+
+    <!-- 비었을 때 -->
+    <div th:if="${paging.totalElements == 0}" class="empty-message">
         아직 공개된 작품이 없습니다. 첫 작품의 주인이 되어보세요!
     </div>
 
-    <!-- 작품 있을 때 -->
-    <div th:if="${!#lists.isEmpty(asciiList)}" class="ascii-list">
-        <div class="ascii-item" th:each="art : ${asciiList}">
+    <!-- 있을 때 -->
+    <div th:if="${paging.totalElements > 0}" class="ascii-list">
+        <div class="ascii-item" th:each="art : ${paging.content}">
             <div class="ascii-header">
                 <div class="ascii-title">
                     <a th:href="@{|/ascii/detail/${art.id}|}"
-                       th:text="${art.subject}">
-                        제목
-                    </a>
+                       th:text="${art.subject}">제목</a>
                 </div>
                 <div class="ascii-meta">
                     by
                     <a th:href="@{|/ascii/user/${art.owner.id}|}"
-                       th:text="${art.owner.username}">
-                        작성자
-                    </a>
+                       th:text="${art.owner.username}">작성자</a>
                 </div>
             </div>
 
-            <!-- 아스키 작품 미리보기 -->
             <pre class="ascii-preview" th:text="${art.content}">미리보기</pre>
         </div>
     </div>
+
+    <!-- 페이징 -->
+    <div class="paging" th:if="${paging.totalPages > 1}">
+        <a class="page-btn"
+           th:if="${paging.hasPrevious()}"
+           th:href="@{/ascii/list(page=${paging.number-1}, kw=${kw}, sort=${sort}, dir=${dir})}">
+            이전
+        </a>
+
+        <a class="page-btn"
+           th:each="p : ${#numbers.sequence(0, paging.totalPages-1)}"
+           th:href="@{/ascii/list(page=${p}, kw=${kw}, sort=${sort}, dir=${dir})}"
+           th:text="${p+1}"
+           th:classappend="${p == paging.number} ? ' active' : ''">
+        </a>
+
+        <a class="page-btn"
+           th:if="${paging.hasNext()}"
+           th:href="@{/ascii/list(page=${paging.number+1}, kw=${kw}, sort=${sort}, dir=${dir})}">
+            다음
+        </a>
+    </div>
+
 </div>
 
 </body>
-<script>
-    async function goCreate(e) {
-      e.preventDefault();
-
-      try {
-        const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
-
-        if (!res.ok) {
-          alert("작품을 올리려면 로그인이 필요합니다.");
-          location.href = "/login";
-          return false;
-        }
-
-        location.href = "/ascii/create";
-        return false;
-      } catch (err) {
-        alert("서버와 통신 중 오류가 발생했습니다.");
-        return false;
-      }
-    }
-</script>
 </html>

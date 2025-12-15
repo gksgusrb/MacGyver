@@ -63,7 +63,9 @@
                 const email = text.replace("현재 로그인한 사용자: ", "");
 
                 area.innerHTML = `
-                    <span style="font-weight:bold;">${email}</span>
+                        <a href="/ascii/my"
+                        style="font-weight:bold; color:white; text-decoration:none; padding:8px 12px; border-radius:5px; background:#3a3a3a;"> ${email}
+                        </a>
                     <button onclick="logout()">로그아웃</button>
                 `;
             } catch (e) {

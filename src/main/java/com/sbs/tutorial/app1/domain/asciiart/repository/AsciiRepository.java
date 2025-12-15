@@ -3,10 +3,11 @@ package com.sbs.tutorial.app1.domain.asciiart.repository;
 import com.sbs.tutorial.app1.domain.asciiart.entity.Ascii;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 
-public interface AsciiRepository extends JpaRepository<Ascii, Integer> {
+public interface AsciiRepository extends JpaRepository<Ascii, Integer>, JpaSpecificationExecutor<Ascii> {
     // 내 작품 보기 공개 비공개 전부
     List<Ascii> findByOwnerOrderByCreateDateDesc(Member owner);
 

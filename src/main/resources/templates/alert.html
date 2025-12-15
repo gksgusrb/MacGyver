@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>알림</title>
+</head>
+<body>
+<script th:inline="javascript">
+    const msg = /*[[${msg}]]*/ "처리할 수 없습니다.";
+    const next = /*[[${next}]]*/ "/";
+
+    alert(msg);
+    location.href = next;
+</script>
+</body>
+</html>

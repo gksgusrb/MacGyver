@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>Not Found</title>
+</head>
+<body>
+
+<script th:inline="javascript">
+    const path = /*[[${path}]]*/ "";
+    const msg = /*[[${message}]]*/ "";
+
+    // 삭제 후 뒤로가기/직접접속으로 상세/수정이 404 된 케이스
+    if (path && (path.startsWith("/ascii/detail/") || path.startsWith("/ascii/modify/"))) {
+      alert("이미 삭제되었거나 존재하지 않는 작품입니다.");
+      location.replace("/ascii/list"); // replace: 뒤로가기로 404 재발 방지
+    } else {
+      alert("존재하지 않는 페이지입니다.");
+      location.replace("/");
+    }
+</script>
+
+</body>
+</html>

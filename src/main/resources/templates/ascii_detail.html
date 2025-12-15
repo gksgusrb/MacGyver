@@ -54,6 +54,21 @@
             font-family: "Consolas", "Courier New", monospace;
             white-space: pre;
         }
+        .action-link {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    color: #007bff;
+    text-decoration: none;
+    cursor: pointer;
+    font: inherit; /* 폰트/크기 동일 */
+  }
+  .action-link:hover {
+    text-decoration: underline;
+  }
+
+
     </style>
 </head>
 <body>
@@ -68,11 +83,19 @@
     <p>
         <a th:href="@{|/ascii/modify/${ascii.id}|}"
            th:attr="data-owner-email=${ascii.owner.email}"
-           onclick="return goAuth(event, this)">수정</a>
+           onclick="return goAuth(event, this)"
+           class="action-link">수정</a>
         |
-        <a th:href="@{|/ascii/delete/${ascii.id}|}"
-           th:attr="data-owner-email=${ascii.owner.email}"
-           onclick="return goAuth(event, this)">삭제</a>
+    <form th:action="@{|/ascii/delete/${ascii.id}|}"
+          method="post"
+          style="display:inline;"
+          onsubmit="return submitDelete(event, this);"
+          th:attr="data-owner-email=${ascii.owner.email}">
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+        <button type="submit" class="action-link">삭제</button>
+    </form>
     </p>
 
     <p>
@@ -96,19 +119,14 @@
 
 </body>
 <script>
-    async function goAuth(e, el) {
+    async function submitDelete(e, form) {
       e.preventDefault();
 
-      const url = el.getAttribute("href");
-      const ownerEmail = (el.dataset.ownerEmail || "").trim();
+      if (!confirm("정말 삭제하시겠습니까?")) return false;
 
-      // 삭제 confirm
-      if (url.includes("/delete/")) {
-        if (!confirm("정말 삭제하시겠습니까?")) return false;
-      }
+      const ownerEmail = (form.dataset.ownerEmail || "").trim();
 
       try {
-        //로그인 체크
         const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
 
         if (!res.ok) {
@@ -117,18 +135,15 @@
           return false;
         }
 
-        //내 이메일 파싱
         const text = await res.text();
         const myEmail = text.replace("현재 로그인한 사용자: ", "").trim();
 
-        //권한 체크 (작성자만)
         if (ownerEmail && myEmail !== ownerEmail) {
           alert("권한이 없습니다. (작성자만 가능합니다)");
           return false;
         }
 
-        // 통과하면 이동
-        location.href = url;
+        form.submit();
         return false;
       } catch (err) {
         alert("서버와 통신 중 오류가 발생했습니다.");
@@ -136,5 +151,6 @@
       }
     }
 </script>
+
 
 </html>
