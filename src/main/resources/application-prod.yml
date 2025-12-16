@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://hhk6079.internal:5432/hhk6079db
+    url: jdbc:postgresql://asciiart.internal:5432/asciiart_prod
     username: postgres
     password: ${custom.prod.db.password}
     driver-class-name: org.postgresql.Driver
