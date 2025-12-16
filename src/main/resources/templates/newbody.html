@@ -97,6 +97,10 @@
 
         return cookie ? cookie.split('=')[1] : null;
     }
+    function isValidEmail(email) {
+    const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+    return emailRegex.test(email);
+}
 
     /* -------------------------
        1) 인증번호 보내기
@@ -108,8 +112,10 @@
         alert("이메일을 입력해주세요.");
         return;
     }
-
-    alert("인증번호 전송을 요청했습니다.\n메일이 도착하는 데 1~2분 정도 걸릴 수 있습니다.");
+    if (!isValidEmail(email)) {
+        alert("이메일 형식이 올바르지 않습니다.\n예) user@example.com");
+        return;
+    }
 
     try {
         const res = await fetch(`/api/auth/send-code?email=${encodeURIComponent(email)}`, {
@@ -120,10 +126,13 @@
 
         const text = await res.text();
 
-        if (!res.ok) {
+        if (res.ok) {
+            //성공했을 때만 안내 팝업
+            alert("로그인용 인증번호 전송을 요청했습니다.\n메일이 도착하는 데 1~2분 정도 걸릴 수 있습니다.");
+        } else {
+            //실패 시 → 실패 메시지만
             alert(text || "인증번호 전송에 실패했습니다.");
         }
-        // 성공(res.ok)이면 굳이 두 번째 팝업 안 띄워도 됨 (이미 앞에서 안내했으니까)
     } catch (e) {
         console.error(e);
         alert("서버 통신 중 오류가 발생했습니다.");

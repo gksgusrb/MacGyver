@@ -239,8 +239,8 @@
     <div class="top-actions">
         <div></div>
         <div>
-            <a th:href="@{/ascii/create}" class="btn-primary">✏ 작품 만들기</a>
-            <a th:href="@{/asciiart}" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
+            <a th:href="@{/ascii/create}" class="btn-primary" onclick="return goCreate(event)">✏ 작품 만들기</a>
+            <a th:href="@{/ascii/art}" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
         </div>
     </div>
 
@@ -307,6 +307,29 @@
     </div>
 
 </div>
+<script>
+    async function goCreate(e) {
+    e.preventDefault();
 
+    try {
+        const res = await fetch("/api/auth/me", {
+            method: "GET",
+            credentials: "include"
+        });
+
+        if (!res.ok) {
+            alert("작품을 올리려면 로그인이 필요합니다.");
+            location.href = "/login";
+            return false;
+        }
+
+        location.href = "/ascii/create";
+        return false;
+    } catch (err) {
+        alert("서버와 통신 중 오류가 발생했습니다.");
+        return false;
+    }
+}
+</script>
 </body>
 </html>

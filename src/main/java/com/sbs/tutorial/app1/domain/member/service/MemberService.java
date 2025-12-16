@@ -136,10 +136,22 @@ public class MemberService {
 
         emailService.sendVerificationCode(cleanEmail);
     }
+    private static final String EMAIL_REGEX =
+            "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+
+    private boolean isValidEmail(String email) {
+        return email.matches(EMAIL_REGEX);
+    }
 
     public void sendLoginCode(String email) {
         String cleanEmail = email.trim();
 
+        if (!isValidEmail(cleanEmail)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "이메일 형식이 올바르지 않습니다."
+            );
+        }
         // 가입되지 않은 이메일이면 코드 안 보냄
         if (!memberRepository.existsByEmail(cleanEmail)) {
             throw new ResponseStatusException(

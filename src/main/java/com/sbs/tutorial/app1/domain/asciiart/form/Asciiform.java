@@ -14,7 +14,7 @@ public class Asciiform {
     private String subject;
 
     @NotEmpty(message="내용은 필수항목입니다.")
-    @Size(max=20000, message="내용은 20000자 이내로 입력해주세요.")
+    @Size(max=200000, message="내용은 200000자 이내로 입력해주세요.")
     private String content;
 
     private boolean isPublic;// 공개여부 확인

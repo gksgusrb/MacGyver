@@ -21,8 +21,5 @@ public class MainController {
         return "newbody";
     }
 
-    @GetMapping("/asciiart")
-    public String ASCIIAtr() {
-        return "ASCIIArt";
-    }
+
 }

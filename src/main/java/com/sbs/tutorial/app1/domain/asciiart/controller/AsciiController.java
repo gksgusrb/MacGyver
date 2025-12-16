@@ -32,6 +32,11 @@ public class AsciiController {
     private final MemberService memberService;
     private final AsciiService asciiService;
 //작품목록 비로그인 도 확인가능
+
+    @GetMapping("/art")
+    public String art() {
+        return "ASCIIArt";
+    }
     @GetMapping("/list")
     public String list(Model model,
                        @RequestParam(value = "page", defaultValue = "0") int page,

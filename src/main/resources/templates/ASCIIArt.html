@@ -35,7 +35,8 @@
 
 <input type="file" id="fileInput" accept="image/*">
 <p>이미지를 선택하면 아래에 아스키 아트가 출력됩니다.</p>
-
+<button id="copyBtn" disabled>📋 복사하기</button>
+<button id="writeBtn" disabled>✏️ 글쓰기로 이동</button>
 <canvas id="canvas" width="400" height="400" style="display:none;"></canvas>
 <pre id="output"></pre>
 
@@ -44,76 +45,115 @@
     const canvas = document.querySelector('#canvas');
     const ctx = canvas.getContext('2d');
 
-    // 어두운 쪽부터 밝은 쪽까지 문자 배열
     const asciiChars = '@%#*+=-:. ';
-
     const fileInput = document.querySelector('#fileInput');
 
+    // 버튼/상태 변수는 스크립트 최상단에
+    const copyBtn = document.querySelector('#copyBtn');
+    const writeBtn = document.querySelector('#writeBtn');
+    let lastResult = "";
+
+    // 이벤트는 딱 1번만 등록
+    copyBtn.addEventListener('click', async () => {
+      if (!lastResult) return;
+
+      try {
+        await navigator.clipboard.writeText(lastResult);
+        alert("복사 완료! (클립보드에 저장됨)");
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = lastResult;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert("복사 완료! (fallback 방식)");
+      }
+    });
+
+    writeBtn.addEventListener('click', async () => {
+      if (!lastResult) return;
+
+      sessionStorage.setItem("asciiDraft", lastResult);
+
+      try {
+        const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
+        if (!res.ok) {
+          alert("글쓰기는 로그인이 필요합니다. 로그인 후 다시 시도해주세요.");
+          location.href = "/login";
+          return;
+        }
+      } catch (e) {
+        alert("서버와 통신 중 오류가 발생했습니다.");
+        return;
+      }
+
+      location.href = "/ascii/create";
+    });
+
     fileInput.addEventListener('change', function (e) {
-        const file = e.target.files[0];
-        if (!file) return;
+      const file = e.target.files[0];
+      if (!file) return;
 
-        const reader = new FileReader();
+      const reader = new FileReader();
 
-        reader.onload = function (ev) {
-            img = new Image();
-            img.onload = function () {
+      reader.onload = function (ev) {
+        img = new Image();
+        img.onload = function () {
 
-                let w = img.width;
-                let h = img.height;
+          let w = img.width;
+          let h = img.height;
 
-                // === 1) 캔버스 최대 크기 늘리기 ===
-                let maxWidth = 400;
-                let maxHeight = 400;
-                let scale = Math.min(maxWidth / w, maxHeight / h, 1);
-                w = Math.floor(w * scale);
-                h = Math.floor(h * scale);
+          let maxWidth = 400;
+          let maxHeight = 400;
+          let scale = Math.min(maxWidth / w, maxHeight / h, 1);
+          w = Math.floor(w * scale);
+          h = Math.floor(h * scale);
 
-                canvas.width = w;
-                canvas.height = h;
-                ctx.drawImage(img, 0, 0, w, h);
+          canvas.width = w;
+          canvas.height = h;
+          ctx.drawImage(img, 0, 0, w, h);
 
-                // === 2) 전체 이미지 데이터를 한 번만 가져오기 ===
-                const imageData = ctx.getImageData(0, 0, w, h).data;
+          const imageData = ctx.getImageData(0, 0, w, h).data;
 
-                let result = '';
+          let result = '';
 
-                // === 3) 해상도(글자 수) 올리기 ===
-                const maxCols = 220;      // 가로 글자 수 (원래 120 → 220으로 업!)
-                const cols = Math.min(maxCols, w);
-                const stepX = w / cols;
+          const maxCols = 220;
+          const cols = Math.min(maxCols, w);
+          const stepX = w / cols;
 
-                const charAspect = 2.0;   // 문자 세로 비율(폰트 비율 맞추려고 약 2배 정도)
-                const stepY = stepX * charAspect;
+          const charAspect = 2.0;
+          const stepY = stepX * charAspect;
 
-                for (let y = 0; y < h; y += stepY) {
-                    const yy = Math.floor(y);
-                    for (let x = 0; x < w; x += stepX) {
-                        const xx = Math.floor(x);
+          for (let y = 0; y < h; y += stepY) {
+            const yy = Math.floor(y);
+            for (let x = 0; x < w; x += stepX) {
+              const xx = Math.floor(x);
 
-                        // (x, y) 위치의 픽셀 인덱스 계산
-                        const idx = (yy * w + xx) * 4;  // RGBA 4바이트씩
-                        const r = imageData[idx];
-                        const g = imageData[idx + 1];
-                        const b = imageData[idx + 2];
+              const idx = (yy * w + xx) * 4;
+              const r = imageData[idx];
+              const g = imageData[idx + 1];
+              const b = imageData[idx + 2];
 
-                        // 밝기(그레이스케일)로 변환
-                        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+              const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+              const charIndex = Math.floor((gray / 255) * (asciiChars.length - 1));
 
-                        // 0~255 → 0~(asciiChars.length-1) 로 매핑
-                        const charIndex = Math.floor((gray / 255) * (asciiChars.length - 1));
+              result += asciiChars[charIndex];
+            }
+            result += '\n';
+          }
 
-                        result += asciiChars[charIndex];
-                    }
-                    result += '\n';
-                }
-
-                document.querySelector('#output').textContent = result;
-            };
-            img.src = ev.target.result;
+          // 변환 완료: 결과 저장 + 버튼 활성화
+          document.querySelector('#output').textContent = result;
+          lastResult = result;
+          copyBtn.disabled = false;
+          writeBtn.disabled = false;
         };
 
-        reader.readAsDataURL(file);
+        img.src = ev.target.result;
+      };
+
+      reader.readAsDataURL(file);
     });
 </script>
 </body>

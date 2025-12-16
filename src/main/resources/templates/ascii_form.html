@@ -50,6 +50,22 @@
 
     <button type="submit">저장</button>
 </form>
+<script>
+    window.addEventListener("load", () => {
+      const draft = sessionStorage.getItem("asciiDraft");
+      if (!draft) return;
 
+      const contentEl = document.getElementById("content");
+      if (!contentEl) return;
+
+      // 이미 사용자가 뭔가 입력했으면 덮어쓰지 않기
+      if (!contentEl.value || contentEl.value.trim().length === 0) {
+        contentEl.value = draft;
+      }
+
+      // 원하면: 자동으로 지우기(한 번만 붙여넣게)
+      sessionStorage.removeItem("asciiDraft");
+    });
+</script>
 </body>
 </html>
