@@ -1,9 +1,9 @@
-# fly.toml app configuration file generated for app1-weathered-feather-704 on 2025-12-16T15:58:45+09:00
+# fly.toml app configuration file generated for app1-solitary-glitter-3726 on 2025-12-16T16:59:49+09:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'app1-weathered-feather-704'
+app = 'app1-solitary-glitter-3726'
 primary_region = 'nrt'
 
 [build]
