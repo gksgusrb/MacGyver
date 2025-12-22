@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -131,11 +131,7 @@
     </style>
 </head>
 <body>
-
-<div class="navbar">
-    <div class="title">MacGyver 사이트</div>
-    <div class="nav-buttons" id="nav-user-area"></div>
-</div>
+<div th:replace="~{navbar :: navbar}"></div>
 
 <div class="hero">
     <h1>이미지와 텍스트를 ASCII 아트로</h1>

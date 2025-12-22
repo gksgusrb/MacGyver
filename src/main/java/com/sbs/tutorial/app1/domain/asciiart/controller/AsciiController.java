@@ -60,13 +60,16 @@ public class AsciiController {
                          Principal principal) {
 
         Ascii ascii = asciiService.getAscii(id);
+        //수정 삭제버튼 숨김처리
+        boolean isOwner = principal != null && ascii.getOwner().getEmail().equals(principal.getName());
         //비공개 작품일경우 소유자만
-         if (!ascii.isPublic()) {
+        if (!ascii.isPublic()) {
             if (principal == null || !ascii.getOwner().getEmail().equals(principal.getName())) {
-                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "열람 권한이 없습니다.");
-             }
-         }
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "열람 권한이 없습니다.");
+            }
+        }
         model.addAttribute("ascii", ascii);
+        model.addAttribute("isOwner", isOwner);//이렇게 하면 삭제 수정버튼을 권한에따라 보이게 또는 안보이게 할수 있음
         return "ascii_detail";
     }
     //작품작성 로그인 필요
@@ -137,7 +140,7 @@ public class AsciiController {
                          @RequestHeader(value = "Referer", required = false) String referer) {
 
         Ascii ascii = asciiService.getAscii(id);
-        
+
         if (!ascii.getOwner().getEmail().equals(principal.getName())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "삭제 권한이 없습니다.");
         }
@@ -164,18 +167,18 @@ public class AsciiController {
 
         return "redirect:/ascii/my";
     }
-   //삭제된 글 뒤로가기 시 404 페이지대신 뒤로가서 보여주기
-   @ExceptionHandler(DataNotFoundException.class)
-   public String handleAsciiNotFound(DataNotFoundException e) {
-       return redirectAlert("이미 삭제되었거나 존재하지 않는 작품입니다.", "/ascii/list");
-   }
+    //삭제된 글 뒤로가기 시 404 페이지대신 뒤로가서 보여주기
+    @ExceptionHandler(DataNotFoundException.class)
+    public String handleAsciiNotFound(DataNotFoundException e) {
+        return redirectAlert("이미 삭제되었거나 존재하지 않는 작품입니다.", "/ascii/list");
+    }
     private String redirectAlert (String msg, String next) {
         String m = URLEncoder.encode(msg, StandardCharsets.UTF_8);
         String n = URLEncoder.encode(next, StandardCharsets.UTF_8);
         return "redirect:/alert?msg=" + m + "&next=" + n;
     }
 
-    @PreAuthorize("isAuthenticated()")
+   // @PreAuthorize("isAuthenticated()") 이부분 제거하면 로그인이 필요하면
     @GetMapping("/my")
     public String myPage(Model model,
                          Principal principal,

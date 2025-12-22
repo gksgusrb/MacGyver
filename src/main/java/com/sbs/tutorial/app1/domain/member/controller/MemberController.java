@@ -3,8 +3,10 @@ package com.sbs.tutorial.app1.domain.member.controller;
 import com.sbs.tutorial.app1.domain.member.service.MemberService;
 import com.sbs.tutorial.app1.domain.clean.email.service.EmailService;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -13,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -83,4 +86,25 @@ public ResponseEntity<?> me() {
 
     return ResponseEntity.status(401).body("로그인 정보가 올바르지 않습니다.");
     }
-}
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/withdraw/send-code")
+    public ResponseEntity<String> sendWithdrawCode(Principal principal) {
+        memberService.sendWithdrawCode(principal.getName());
+        return ResponseEntity.ok("회원 탈퇴 인증번호가 이메일로 발송되었습니다.");
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/withdraw")
+    public ResponseEntity<String> withdraw(Principal principal, String code, HttpServletRequest request) {
+
+        memberService.withdraw(principal.getName(), code);
+
+        // 세션/인증 제거 (탈퇴했으니 로그아웃 처리)
+        SecurityContextHolder.clearContext();
+        request.getSession().invalidate();
+
+        return ResponseEntity.ok("회원 탈퇴가 완료되었습니다.");
+    }
+ }
+

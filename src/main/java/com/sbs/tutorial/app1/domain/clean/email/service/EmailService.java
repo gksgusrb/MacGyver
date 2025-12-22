@@ -62,4 +62,23 @@ public class EmailService {
 
         mailSender.send(message);
     }
+
+    public void sendWithdrawCode(String email) {
+        String code = String.format("%06d", new Random().nextInt(999999));
+        //dev면 fake 사용
+        if (fakeRedisStorage != null) {
+            fakeRedisStorage.put("withdraw:" + email, code);
+        } else {
+            // 아니면 Redis 사용
+            redisTemplate.opsForValue().set("withdraw:" + email, code, 5, TimeUnit.MINUTES);
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("[MacGyver]이메일 탈퇴 인증번호");
+        message.setText("탈퇴 인증번호는 " + code + " 입니다. (5분 유효)");
+
+        mailSender.send(message);
+    }
+
 }

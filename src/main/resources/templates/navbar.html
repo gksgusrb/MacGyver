@@ -4,94 +4,285 @@
 <div th:fragment="navbar">
 
     <div class="navbar">
-        <div class="title"><a href="/">MacGyver 사이트</a></div>
+        <div class="nav-left">
+            <!-- 특정 페이지에서만 보이도록 JS가 display 제어 -->
+            <button id="menuBtn" class="menu-btn" type="button"
+                    aria-label="메뉴 열기" aria-expanded="false" style="display:none;">☰</button>
+
+            <div class="title"><a href="/">MacGyver 사이트</a></div>
+        </div>
+
         <div class="nav-buttons" id="nav-user-area"></div>
     </div>
 
+    <!-- Drawer (JS가 특정 페이지에서만 활성화) -->
+    <div id="drawerOverlay" class="drawer-overlay" hidden></div>
+
+    <aside id="drawer" class="drawer" aria-hidden="true">
+        <div class="drawer-header">
+            <div class="drawer-title">MENU</div>
+            <button id="drawerCloseBtn" class="drawer-close" type="button" aria-label="메뉴 닫기">✕</button>
+        </div>
+
+        <nav class="drawer-nav">
+            <a href="/">🏠 홈</a>
+            <a href="/ascii/list">🌍 전체 갤러리</a>
+            <a href="/ascii/my" onclick="return goMyPage(event)">🙋 내 작품</a>
+            <a id="drawerWithdrawLink" href="/withdraw" class="drawer-danger" style="display:none;">
+                🚨 회원 탈퇴
+            </a>
+        </nav>
+    </aside>
+
     <style>
         .navbar {
-            width: 100%;
-            height: 60px;
-            background: #222;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;          /*로고가 구석으로 안 감 */
-            box-sizing: border-box;
+          width: 100%;
+          height: 60px;
+          background: #222;
+          color: white;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 20px;
+          box-sizing: border-box;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
         }
+
+        .nav-left{
+          display:flex;
+          align-items:center;
+          gap:10px;
+        }
+
         .navbar .title a {
-            color: white;
-            text-decoration: none;
-            font-size: 22px;
-            font-weight: bold;
+          color: white;
+          text-decoration: none;
+          font-size: 22px;
+          font-weight: bold;
         }
+        .navbar .title a:hover { text-decoration: underline; }
+
         .nav-buttons {
-            display: flex;
-            align-items: center;
-            gap: 15px;
+          display: flex;
+          align-items: center;
+          gap: 15px;
         }
+
         .nav-buttons a, .nav-buttons button {
-            color: white;
-            text-decoration: none;
-            font-size: 15px;
-            padding: 8px 12px;
-            border-radius: 5px;
-            background: #3a3a3a;
-            border: none;
-            cursor: pointer;
+          color: white;
+          text-decoration: none;
+          font-size: 15px;
+          padding: 8px 12px;
+          border-radius: 5px;
+          background: #3a3a3a;
+          border: none;
+          cursor: pointer;
+          white-space: nowrap;
         }
-        .nav-buttons a:hover, .nav-buttons button:hover {
-            background: #555;
+        .nav-buttons a:hover, .nav-buttons button:hover { background: #555; }
+
+        /* 햄버거 */
+        .menu-btn{
+          font-size:20px;
+          background:transparent;
+          border:none;
+          color:white;
+          cursor:pointer;
+          padding: 6px 8px;
+          border-radius: 6px;
         }
+        .menu-btn:hover{ background:#333; }
+
+        /* 오버레이 */
+        .drawer-overlay{
+          position:fixed;
+          inset:0;
+          background:rgba(0,0,0,0.45);
+          z-index:999;
+        }
+
+        /* 드로어 */
+        .drawer{
+          position:fixed;
+          top:0;
+          left:0;
+          height:100vh;
+          width:280px;
+          background:#fff;
+          box-shadow: 2px 0 10px rgba(0,0,0,0.18);
+          transform: translateX(-100%);
+          transition: transform .2s ease;
+          z-index:1000;
+          display:flex;
+          flex-direction:column;
+        }
+        .drawer.open{ transform: translateX(0); }
+
+        .drawer-header{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          padding:14px 16px;
+          border-bottom:1px solid #eee;
+        }
+        .drawer-title{ font-weight:700; color:#222; }
+        .drawer-close{
+          background:transparent;
+          border:none;
+          font-size:18px;
+          cursor:pointer;
+        }
+
+        .drawer-nav{
+          display:flex;
+          flex-direction:column;
+          padding:10px 12px;
+          gap:8px;
+        }
+        .drawer-nav a{
+          padding:10px 10px;
+          border-radius:8px;
+          text-decoration:none;
+          color:#222;
+        }
+        .drawer-nav a:hover{ background:#f2f2f2; }
+
+        .no-scroll{ overflow:hidden; }
+        .drawer-danger{
+            color:#dc3545;
+            font-weight:700;
+        }
+            .drawer-danger:hover{
+            background: rgba(220,53,69,0.08);
+        }
+
     </style>
 
     <script>
         async function setupNavbar() {
-            const area = document.getElementById("nav-user-area");
-            const path = window.location.pathname;
+          const area = document.getElementById("nav-user-area");
+          const withdrawLink = document.getElementById("drawerWithdrawLink");
+          const path = window.location.pathname;
 
-            if (path === "/login" || path === "/newbody") {
-                area.innerHTML = `<a href="/">홈으로</a>`;
-                return;
-            }
+          if (path === "/login" || path === "/newbody") {
+            area.innerHTML = `<a href="/">홈으로</a>`;
+            if (withdrawLink) withdrawLink.style.display = "none";
+            return;
+          }
 
-            try {
-                const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
-                if (!res.ok) throw new Error();
-                const text = await res.text();
-                const email = text.replace("현재 로그인한 사용자: ", "");
+          try {
+            const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
+            if (!res.ok) throw new Error();
 
-                area.innerHTML = `
-                        <a href="/ascii/my"
-                        style="font-weight:bold; color:white; text-decoration:none; padding:8px 12px; border-radius:5px; background:#3a3a3a;"> ${email}
-                        </a>
-                    <button onclick="logout()">로그아웃</button>
-                `;
-            } catch (e) {
-                area.innerHTML = `
-                    <a href="/login">로그인</a>
-                    <a href="/newbody">회원가입</a>
-                `;
-            }
+            const text = await res.text();
+            const email = text.replace("현재 로그인한 사용자: ", "");
+
+            area.innerHTML = `
+              <a href="/ascii/my" style="font-weight:bold;">${email}</a>
+              <button onclick="logout()">로그아웃</button>
+            `;
+            if (withdrawLink) withdrawLink.style.display = "block";
+          } catch (e) {
+            area.innerHTML = `
+              <a href="/login">로그인</a>
+              <a href="/newbody">회원가입</a>
+            `;
+            if (withdrawLink) withdrawLink.style.display = "none";
+          }
         }
 
         function getCsrfTokenFromCookie() {
-            const cookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
-            return cookie ? cookie.split('=')[1] : null;
+          const cookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
+          return cookie ? cookie.split('=')[1] : null;
         }
 
         async function logout() {
-            const token = getCsrfTokenFromCookie();
-            await fetch("/api/auth/logout", {
-                method: "POST",
-                headers: { "X-XSRF-TOKEN": token },
-                credentials: "include"
-            });
-            location.href = "/";
+          const token = getCsrfTokenFromCookie();
+          await fetch("/api/auth/logout", {
+            method: "POST",
+            headers: { "X-XSRF-TOKEN": token },
+            credentials: "include"
+          });
+          location.href = "/";
         }
 
-        window.addEventListener("load", setupNavbar);
+        //슬라이드 메뉴: /, /ascii/list, /ascii/my 에서만 보이게
+        function setupDrawer() {
+          const path = window.location.pathname;
+
+          const allowed =
+            (path === "/") ||
+            (path === "/ascii/list") ||
+            (path === "/ascii/my");
+
+          const menuBtn = document.getElementById("menuBtn");
+          const drawer = document.getElementById("drawer");
+          const overlay = document.getElementById("drawerOverlay");
+          const closeBtn = document.getElementById("drawerCloseBtn");
+
+          if (!menuBtn || !drawer || !overlay || !closeBtn) return;
+
+          if (!allowed) {
+            menuBtn.style.display = "none";
+            overlay.hidden = true;
+            drawer.classList.remove("open");
+            return;
+          }
+
+          menuBtn.style.display = "inline-block";
+
+          function openDrawer(){
+            drawer.classList.add("open");
+            overlay.hidden = false;
+            drawer.setAttribute("aria-hidden","false");
+            menuBtn.setAttribute("aria-expanded","true");
+            document.body.classList.add("no-scroll");
+          }
+
+          function closeDrawer(){
+            drawer.classList.remove("open");
+            overlay.hidden = true;
+            drawer.setAttribute("aria-hidden","true");
+            menuBtn.setAttribute("aria-expanded","false");
+            document.body.classList.remove("no-scroll");
+          }
+
+          if (!menuBtn.dataset.bound) {
+            menuBtn.addEventListener("click", openDrawer);
+            closeBtn.addEventListener("click", closeDrawer);
+            overlay.addEventListener("click", closeDrawer);
+            document.addEventListener("keydown", (e)=>{ if(e.key==="Escape") closeDrawer(); });
+            menuBtn.dataset.bound = "1";
+          }
+        }
+
+        window.addEventListener("load", () => {
+          setupNavbar();
+          setupDrawer();
+        });
+        async function goMyPage(e) {
+  e.preventDefault();
+
+  try {
+    const res = await fetch("/api/auth/me", {
+      method: "GET",
+      credentials: "include"
+    });
+
+    if (!res.ok) {
+      location.href = "/login";
+      return false;
+    }
+
+    location.href = "/ascii/my";
+    return false;
+  } catch (err) {
+    location.href = "/login";
+    return false;
+  }
+}
     </script>
 
 </div>

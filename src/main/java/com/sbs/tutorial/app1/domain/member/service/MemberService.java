@@ -1,10 +1,12 @@
 package com.sbs.tutorial.app1.domain.member.service;
 
+import com.sbs.tutorial.app1.domain.asciiart.repository.AsciiRepository;
 import com.sbs.tutorial.app1.domain.clean.email.service.EmailService;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
 import com.sbs.tutorial.app1.domain.member.repository.MemberRepository;
 import com.sbs.tutorial.app1.domain.member.entity.MemberRole;
 import exception.DataNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,8 @@ public class MemberService {
     private final StringRedisTemplate redisTemplate;
     private final Map<String, String> fakeRedisStorage; //로컬
     private final EmailService emailService;
+    private final AsciiRepository asciiRepository;
+
 //authcontroller에서 호출 받아서 authService.verifyCodeAndRegister(email, username, code) 정보를받아옴
     public void verifyCodeAndRegister(String email, String username, String inputCode) {
         String cleanEmail = email.trim();// 변수를 설정해 뛰어쓰기 하더라고 공백을 제거하고 입력받음
@@ -163,4 +167,47 @@ public class MemberService {
         emailService.sendloginCode(cleanEmail);
     }
 
+    public void sendWithdrawCode(String email) {
+        String cleanEmail = email.trim();
+
+        if (!memberRepository.existsByEmail(cleanEmail)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가입되지 않은 이메일입니다.");
+        }
+
+        emailService.sendWithdrawCode(cleanEmail);
+    }
+    @Transactional
+    public void withdraw(String email, String inputCode) {
+        String cleanEmail = email.trim();
+
+        Member member = memberRepository.findByEmail(cleanEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "회원 정보를 찾을 수 없습니다."));
+
+        String savedCode;
+        if (fakeRedisStorage != null) {
+            savedCode = fakeRedisStorage.get("withdraw:" + cleanEmail);
+        } else {
+            savedCode = redisTemplate.opsForValue().get("withdraw:" + cleanEmail);
+        }
+
+        if (savedCode == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "인증번호가 만료되었거나 존재하지 않습니다.");
+        }
+        if (!savedCode.equals(inputCode)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "인증번호가 일치하지 않습니다.");
+        }
+
+        //작성한 글 삭제(정책)
+        asciiRepository.deleteAllByOwner(member);
+
+        //회원 삭제
+        memberRepository.delete(member);
+
+        //인증코드 삭제  탈퇴 이후에는 코드를 바로 삭제함으로 오류 방지
+        if (fakeRedisStorage != null) {
+            fakeRedisStorage.remove("withdraw:" + cleanEmail);
+        } else {
+            redisTemplate.delete("withdraw:" + cleanEmail);
+        }
+    }
 }

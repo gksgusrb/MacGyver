@@ -51,9 +51,19 @@
         }
 
         pre {
-            font-family: "Consolas", "Courier New", monospace;
-            white-space: pre;
-        }
+  font-family: "Consolas", "Courier New", monospace;
+  white-space: pre;             /* ASCII 정렬 유지 */
+  font-size: 10px;              /* 글씨 줄이기 */
+  line-height: 0.95;            /* 줄 간격 줄이기 */
+  overflow-x: auto;             /* 잘리면 가로 스크롤 */
+  overflow-y: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  background: #111;             /* 보기 좋게(선택) */
+  color: #ffffff;                  /* 보기 좋게(선택) */
+  padding: 12px;                /* 보기 좋게(선택) */
+  border-radius: 6px;           /* 보기 좋게(선택) */
+}
         .action-link {
     background: none;
     border: none;
@@ -80,7 +90,7 @@
 
     <h1 th:text="${ascii.subject}">제목</h1>
 
-    <p>
+    <div th:if="${isOwner}">
         <a th:href="@{|/ascii/modify/${ascii.id}|}"
            th:attr="data-owner-email=${ascii.owner.email}"
            onclick="return goAuth(event, this)"
@@ -96,7 +106,7 @@
 
         <button type="submit" class="action-link">삭제</button>
     </form>
-    </p>
+    </div>
 
     <p>
         작성자:

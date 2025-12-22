@@ -16,6 +16,10 @@ public interface AsciiRepository extends JpaRepository<Ascii, Integer>, JpaSpeci
 
     // 다른사람이 모든사람의 작품을 보기 공개만
     List<Ascii> findByIsPublicTrueOrderByCreateDateDesc();
+
+
+
+    void deleteAllByOwner(Member owner);
 }
 //findBy + 필드와 조건 + OrderBy + 정렬 기준 필드 +Asc Desc 를 맞춰 쓰다보니 길어지는문제
 // 나중에 강사님꺼 처럼 findBySubjectAndContent 로 검색 기능도 추가할 예정

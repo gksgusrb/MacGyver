@@ -34,14 +34,26 @@ public class SecurityConfig {
                                 "/login",
                                 "/newbody",
                                 "/asciiart",
-                                "/ascii",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
-                        ).permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/ascii/**").permitAll()
+                                "/images/**",
+                                "/alert"
+
+                        ).permitAll() //"/ascii", 아래에서 /ascii/** 선언했기떄문에 ascii  붙어있으면 전부 열림
+                        //.requestMatchers("/api/auth/**").permitAll() 탈퇴 기능 떄문에 이게있으면 비회원도 회원탈퇴 기능을 사용가능함
                         .requestMatchers("/admin/**").hasRole("ADMIN")
+
+                        .requestMatchers("/ascii/create", "/ascii/modify/**", "/ascii/delete/**", "/ascii/my", "/withdraw").authenticated() //ascii 에서 시큐리티의 통제를 받아야만 열려야 하는것들을 적음
+
+                        .requestMatchers("/ascii/**").permitAll()
+                        .requestMatchers("/api/auth/csrf-token").permitAll()
+                        .requestMatchers("/api/auth/send-code", "/api/auth/verify").permitAll()
+                        .requestMatchers("/api/auth/login/**").permitAll()
+                        .requestMatchers("/api/auth/me").permitAll()
+                        .requestMatchers("/api/auth/logout").permitAll()
+
+                        .requestMatchers("/api/auth/withdraw/**").authenticated()
+
                         .anyRequest().authenticated()
 
                 )

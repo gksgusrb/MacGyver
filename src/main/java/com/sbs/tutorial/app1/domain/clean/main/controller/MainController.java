@@ -21,5 +21,12 @@ public class MainController {
         return "newbody";
     }
 
+    @GetMapping("/withdraw")
+    public String withdraw() {
+        return "withdraw";
+    }
+
+
+
 
 }

@@ -2,267 +2,256 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>ASCII 작품 목록 | MacGyver</title>
+    <title>내 작품 | MacGyver</title>
 
     <style>
         body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
+          margin: 0;
+          padding: 0;
+          font-family: Arial, sans-serif;
+          background: #f5f5f5;
         }
 
-        /* ───── 네비바 ───── */
-        .navbar {
-            width: 100%;
-            height: 60px;
-            background: #222;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            box-sizing: border-box;
-            margin: -20px -20px 20px -20px;
-        }
-
-        .navbar .title a {
-            color: white;
-            text-decoration: none;
-            font-size: 22px;
-            font-weight: bold;
-        }
-
-        .navbar .title a:hover {
-            text-decoration: underline;
-        }
-
-        .nav-buttons {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .nav-buttons a,
-        .nav-buttons button {
-            color: white;
-            text-decoration: none;
-            font-size: 15px;
-            padding: 6px 10px;
-            border-radius: 5px;
-            background: #3a3a3a;
-            border: none;
-            cursor: pointer;
-        }
-
-        .nav-buttons a:hover,
-        .nav-buttons button:hover {
-            background: #555;
-        }
-
-        /* ───── 메인 영역 ───── */
         .container {
-            max-width: 900px;
-            margin: 0 auto 40px;
+          max-width: 900px;
+          margin: 20px auto 40px;
+          padding: 0 16px;
         }
 
-        h1 {
-            margin-bottom: 5px;
+
+    h1 {
+          margin-bottom: 6px;
         }
 
         .sub-text {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 15px;
+          color: #666;
+          font-size: 14px;
+          margin-bottom: 18px;
         }
 
+        /* ───── 상단 액션 영역 ───── */
         .top-actions {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            gap: 10px;
-            flex-wrap: wrap;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+          margin-bottom: 14px;
         }
 
         .btn-primary,
-        .btn-secondary {
-            display: inline-block;
-            padding: 8px 14px;
-            border-radius: 6px;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
+        .btn-secondary,
+        .btn-danger {
+          display: inline-block;
+          padding: 8px 14px;
+          border-radius: 6px;
+          text-decoration: none;
+          border: none;
+          cursor: pointer;
+          font-size: 14px;
         }
 
-        .btn-primary {
-            background: #007bff;
-            color: white;
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0069d9; }
+
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #c82333; }
+
+        /* ───── 카드 박스 ───── */
+        .card {
+          background: #fff;
+          border-radius: 10px;
+          padding: 14px 14px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+          margin-bottom: 14px;
         }
 
-        .btn-primary:hover {
-            background: #0069d9;
+        .card-title {
+          font-size: 15px;
+          font-weight: bold;
+          margin-bottom: 8px;
         }
 
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
+        /* ───── 탈퇴 영역 ───── */
+        .danger-card {
+          border: 1px solid rgba(220,53,69,0.35);
+          background: #fff;
         }
 
-        .btn-secondary:hover {
-            background: #5a6268;
+        .danger-hint {
+          margin-top: 6px;
+          color: #666;
+          font-size: 13px;
+          line-height: 1.4;
         }
 
-        .empty-message {
-            margin-top: 20px;
-            color: #777;
+        .withdraw-row {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+
+        .withdraw-row input {
+          padding: 8px 10px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          width: 190px;
         }
 
         /* ───── 검색/정렬 영역 ───── */
         .search-bar {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin: 10px 0 20px;
+          display: flex;
+          gap: 10px;
+          align-items: center;
+          flex-wrap: wrap;
+          margin: 10px 0 10px;
         }
 
         .search-bar input[type="text"] {
-            padding: 8px 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            min-width: 240px;
+          padding: 8px 10px;
+          border: 1px solid #ccc;
+          border-radius: 6px;
+          min-width: 240px;
         }
 
         /* ───── 리스트 카드 ───── */
         .ascii-list {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-top: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-top: 10px;
         }
 
         .ascii-item {
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 10px 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+          background: #ffffff;
+          border-radius: 10px;
+          padding: 12px 12px;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
 
         .ascii-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-            gap: 10px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+          gap: 10px;
         }
 
         .ascii-title a {
-            font-weight: bold;
-            font-size: 16px;
-            color: #333;
-            text-decoration: none;
+          font-weight: bold;
+          font-size: 16px;
+          color: #333;
+          text-decoration: none;
+        }
+        .ascii-title a:hover { text-decoration: underline; }
+
+        .badge {
+          font-size: 12px;
+          padding: 4px 8px;
+          border-radius: 999px;
+          border: 1px solid #ddd;
+          color: #555;
+          white-space: nowrap;
         }
 
-        .ascii-title a:hover {
-            text-decoration: underline;
-        }
-
-        .ascii-meta {
-            font-size: 12px;
-            color: #666;
-            white-space: nowrap;
-        }
-
-        .ascii-meta a {
-            color: #007bff;
-            text-decoration: none;
-        }
-
-        .ascii-meta a:hover {
-            text-decoration: underline;
-        }
+        .badge.public { border-color: rgba(40,167,69,0.35); color: #218838; }
+        .badge.private { border-color: rgba(108,117,125,0.35); color: #6c757d; }
 
         .ascii-preview {
-            margin-top: 6px;
-            background: #111;
-            color: #0f0;
-            border-radius: 4px;
-            padding: 6px;
-            font-family: "Consolas", "Courier New", monospace;
-            font-size: 11px;
-            line-height: 1.1;
-            white-space: pre;
-            max-height: 200px;
-            overflow: auto;
+          margin-top: 8px;
+          background: #111;
+          color: #0f0;
+          border-radius: 8px;
+          padding: 10px;
+          font-family: "Consolas", "Courier New", monospace;
+          font-size: 11px;
+          line-height: 1.1;
+          white-space: pre;
+          max-height: 220px;
+          overflow: auto;
+        }
+
+        .empty-message {
+          margin-top: 16px;
+          color: #777;
         }
 
         /* ───── 페이징 ───── */
         .paging {
-            margin-top: 22px;
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            flex-wrap: wrap;
+          margin-top: 22px;
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          flex-wrap: wrap;
         }
 
         .page-btn {
-            display: inline-block;
-            padding: 8px 12px;
-            border-radius: 6px;
-            background: #6c757d;
-            color: white;
-            text-decoration: none;
-            font-size: 13px;
+          display: inline-block;
+          padding: 8px 12px;
+          border-radius: 6px;
+          background: #6c757d;
+          color: white;
+          text-decoration: none;
+          font-size: 13px;
         }
-
         .page-btn:hover { background: #5a6268; }
-
         .page-btn.active {
-            font-weight: bold;
-            border: 2px solid #333;
-            background: #495057;
+          font-weight: bold;
+          border: 2px solid #333;
+          background: #495057;
         }
     </style>
 </head>
+
 <body>
 
 <div th:replace="~{navbar :: navbar}"></div>
 
 <div class="container">
-    <h1>ASCII 작품 목록</h1>
+
+    <h1>내 ASCII 작품</h1>
     <div class="sub-text">
-        전 세계의 ASCII 작품들을 구경해보세요 ✨
+        내가 올린 작품만 모아서 관리하는 페이지입니다. (공개/비공개 모두 포함)
     </div>
 
     <div class="top-actions">
-        <div></div>
-        <div>
-            <a th:href="@{/ascii/create}" class="btn-primary">✏ 작품 만들기</a>
-            <a th:href="@{/asciiart}" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a th:href="@{/ascii/list}" class="btn-secondary">🌍 전체 갤러리</a>
+
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a th:href="@{/ascii/create}" class="btn-primary">✏ 내 작품 올리기</a>
+            <a th:href="@{/ascii/art}" class="btn-secondary">🖼 이미지 → ASCII 변환기</a>
         </div>
     </div>
 
-    <!-- 검색/정렬 -->
-    <form class="search-bar" th:action="@{/ascii/list}" method="get">
-        <input type="text" name="kw" placeholder="검색 (제목/내용/작성자)" th:value="${kw}"/>
+    <a th:href="@{/withdraw}" class="btn-danger">🚨 회원 탈퇴</a>
 
-        <input type="hidden" name="sort" th:value="${sort}">
-        <input type="hidden" name="dir" th:value="${dir}">
+    <div class="card">
+        <div class="card-title">🔎 내 작품 검색</div>
 
-        <button type="submit" class="btn-secondary">검색</button>
+        <form class="search-bar" th:action="@{/ascii/my}" method="get">
+            <input type="text" name="kw" placeholder="검색 (제목/내용)" th:value="${kw}"/>
 
-        <!-- 정렬(페이지는 0으로 리셋) -->
-        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='createDate', dir='desc')}">최신순</a>
-        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='createDate', dir='asc')}">오래된순</a>
-        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='subject', dir='asc')}">제목 A→Z</a>
-        <a class="btn-secondary" th:href="@{/ascii/list(page=0, kw=${kw}, sort='subject', dir='desc')}">제목 Z→A</a>
-    </form>
+            <input type="hidden" name="sort" th:value="${sort}">
+            <input type="hidden" name="dir" th:value="${dir}">
+
+            <button type="submit" class="btn-secondary">검색</button>
+
+            <a class="btn-secondary" th:href="@{/ascii/my(page=0, kw=${kw}, sort='createDate', dir='desc')}">최신순</a>
+            <a class="btn-secondary" th:href="@{/ascii/my(page=0, kw=${kw}, sort='createDate', dir='asc')}">오래된순</a>
+            <a class="btn-secondary" th:href="@{/ascii/my(page=0, kw=${kw}, sort='subject', dir='asc')}">제목 A→Z</a>
+            <a class="btn-secondary" th:href="@{/ascii/my(page=0, kw=${kw}, sort='subject', dir='desc')}">제목 Z→A</a>
+        </form>
+    </div>
 
     <!-- 비었을 때 -->
     <div th:if="${paging.totalElements == 0}" class="empty-message">
-        아직 공개된 작품이 없습니다. 첫 작품의 주인이 되어보세요!
+        아직 올린 작품이 없습니다. 위의 “내 작품 올리기”로 첫 작품을 등록해보세요!
     </div>
 
     <!-- 있을 때 -->
@@ -270,14 +259,11 @@
         <div class="ascii-item" th:each="art : ${paging.content}">
             <div class="ascii-header">
                 <div class="ascii-title">
-                    <a th:href="@{|/ascii/detail/${art.id}|}"
-                       th:text="${art.subject}">제목</a>
+                    <a th:href="@{|/ascii/detail/${art.id}|}" th:text="${art.subject}">제목</a>
                 </div>
-                <div class="ascii-meta">
-                    by
-                    <a th:href="@{|/ascii/user/${art.owner.id}|}"
-                       th:text="${art.owner.username}">작성자</a>
-                </div>
+
+                <span class="badge public" th:if="${art.public}">공개</span>
+                <span class="badge private" th:if="${!art.public}">비공개</span>
             </div>
 
             <pre class="ascii-preview" th:text="${art.content}">미리보기</pre>
@@ -288,25 +274,41 @@
     <div class="paging" th:if="${paging.totalPages > 1}">
         <a class="page-btn"
            th:if="${paging.hasPrevious()}"
-           th:href="@{/ascii/list(page=${paging.number-1}, kw=${kw}, sort=${sort}, dir=${dir})}">
+           th:href="@{/ascii/my(page=${paging.number-1}, kw=${kw}, sort=${sort}, dir=${dir})}">
             이전
         </a>
 
         <a class="page-btn"
            th:each="p : ${#numbers.sequence(0, paging.totalPages-1)}"
-           th:href="@{/ascii/list(page=${p}, kw=${kw}, sort=${sort}, dir=${dir})}"
+           th:href="@{/ascii/my(page=${p}, kw=${kw}, sort=${sort}, dir=${dir})}"
            th:text="${p+1}"
            th:classappend="${p == paging.number} ? ' active' : ''">
         </a>
 
         <a class="page-btn"
            th:if="${paging.hasNext()}"
-           th:href="@{/ascii/list(page=${paging.number+1}, kw=${kw}, sort=${sort}, dir=${dir})}">
+           th:href="@{/ascii/my(page=${paging.number+1}, kw=${kw}, sort=${sort}, dir=${dir})}">
             다음
         </a>
     </div>
 
 </div>
+
+<script>
+    function getCsrfTokenFromCookie() {
+      const cookie = document.cookie.split('; ').find(row => row.startsWith('XSRF-TOKEN='));
+      return cookie ? cookie.split('=')[1] : null;
+    }
+
+    async function ensureLoggedInAndShowWithdraw() {
+      try {
+        const res = await fetch("/api/auth/me", { method: "GET", credentials: "include" });
+        if (res.ok) {
+          document.getElementById("withdrawCard").style.display = "block";
+        }
+      } catch (e) {}
+    }
+</script>
 
 </body>
 </html>
