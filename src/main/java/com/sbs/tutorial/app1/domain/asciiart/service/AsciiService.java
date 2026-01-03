@@ -1,10 +1,13 @@
 package com.sbs.tutorial.app1.domain.asciiart.service;
 
 import com.sbs.tutorial.app1.domain.asciiart.entity.Ascii;
+import com.sbs.tutorial.app1.domain.asciiart.entity.AsciiComment;
+import com.sbs.tutorial.app1.domain.asciiart.repository.AsciiCommentRepository;
 import com.sbs.tutorial.app1.domain.asciiart.repository.AsciiRepository;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
 import exception.DataNotFoundException;
 import jakarta.persistence.criteria.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -12,7 +15,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,6 +29,7 @@ import java.util.List;
 public class AsciiService {
 
     private final AsciiRepository asciiRepository;
+    private final AsciiCommentRepository asciiCommentRepository;
 
     // ===== 검색 조건 (강사님 방식) =====
     private Specification<Ascii> search(String kw) {
@@ -118,4 +124,62 @@ public class AsciiService {
     public void delete(Ascii ascii) {
         asciiRepository.delete(ascii);
     }
+
+    public List<AsciiComment> getComments(Ascii ascii) {
+        return asciiCommentRepository.findByAsciiOrderByCreateDateAsc(ascii);
+    }
+    @Transactional
+    public void addComment(Ascii ascii, Member me, String content) {
+        if (content == null || content.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "댓글 내용을 입력해주세요.");
+        }
+
+        AsciiComment c = AsciiComment.builder()
+                .ascii(ascii)
+                .author(me)
+                .content(content.trim())
+                .createDate(LocalDateTime.now())
+                .build();
+
+        asciiCommentRepository.save(c);
+    }
+
+    @Transactional
+    public Integer deleteComment(Long commentId, String myEmail) {
+        AsciiComment c = asciiCommentRepository.findById(commentId)
+                .orElseThrow(() -> new DataNotFoundException("comment not found"));
+
+        if (myEmail == null || !c.getAuthor().getEmail().equals(myEmail)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "삭제 권한이 없습니다.");
+        }
+
+        Integer asciiId = c.getAscii().getId();
+        asciiCommentRepository.delete(c);
+        return asciiId;
+    }
+    public AsciiComment getComment(Long commentId) {
+        return asciiCommentRepository.findById(commentId)
+                .orElseThrow(() -> new DataNotFoundException("comment not found"));
+    }
+
+    @Transactional
+    public Integer modifyComment(Long commentId, String myEmail, String content) {
+        AsciiComment c = asciiCommentRepository.findById(commentId)
+                .orElseThrow(() -> new DataNotFoundException("comment not found"));
+
+        if (myEmail == null || !c.getAuthor().getEmail().equals(myEmail)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 권한이 없습니다.");
+        }
+
+        if (content == null || content.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "댓글 내용을 입력해주세요.");
+        }
+
+        c.setContent(content.trim());
+        c.setModifyDate(LocalDateTime.now());
+
+        asciiCommentRepository.save(c);
+        return c.getAscii().getId();
+    }
+
 }

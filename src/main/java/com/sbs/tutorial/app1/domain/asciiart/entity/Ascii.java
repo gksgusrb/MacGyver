@@ -7,6 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 @Entity
 @Getter
@@ -38,6 +39,10 @@ public class Ascii {
     //생성 일자와 수정일자
     private LocalDateTime createDate;
     private LocalDateTime modifyDate;
+
+    @OneToMany(mappedBy = "ascii", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @ToString.Exclude
+    private List<AsciiComment> commentList = new ArrayList<>();
 /*
     @ManyToMany
     Set<SiteUser> voter = new HashSet<>();

@@ -1,6 +1,7 @@
 package com.sbs.tutorial.app1.domain.asciiart.controller;
 
 import com.sbs.tutorial.app1.domain.asciiart.entity.Ascii;
+import com.sbs.tutorial.app1.domain.asciiart.entity.AsciiComment;
 import com.sbs.tutorial.app1.domain.asciiart.form.Asciiform;
 import com.sbs.tutorial.app1.domain.asciiart.service.AsciiService;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
@@ -68,8 +69,11 @@ public class AsciiController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "열람 권한이 없습니다.");
             }
         }
+
         model.addAttribute("ascii", ascii);
         model.addAttribute("isOwner", isOwner);//이렇게 하면 삭제 수정버튼을 권한에따라 보이게 또는 안보이게 할수 있음
+        model.addAttribute("comments", asciiService.getComments(ascii));
+        model.addAttribute("myEmail", principal != null ? principal.getName() : null);
         return "ascii_detail";
     }
     //작품작성 로그인 필요
@@ -225,4 +229,69 @@ public class AsciiController {
 
         return "ascii_mypage";
     }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/comment")
+    public String createComment(@PathVariable("id") Integer id,
+                                @RequestParam("content") String content,
+                                Principal principal) {
+
+        Ascii ascii = asciiService.getAscii(id);
+
+        if (content == null || content.trim().isEmpty()) {
+            return redirectAlert("댓글 내용을 입력해주세요.", "/ascii/detail/" + id);
+        }
+
+        // 비공개 글이면 주인만 댓글 가능 혹시모르는 제한추가
+        if (!ascii.isPublic() && !ascii.getOwner().getEmail().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "댓글 권한이 없습니다.");
+        }
+
+        Member me = memberService.getMemberByEmail(principal.getName());
+        asciiService.addComment(ascii, me, content);
+
+        return "redirect:/ascii/detail/" + id;
+    }
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/comment/delete/{commentId}")
+    public String deleteComment(@PathVariable("commentId") Long commentId,
+                                Principal principal) {
+
+        Integer asciiId = asciiService.deleteComment(commentId, principal.getName());
+        return "redirect:/ascii/detail/" + asciiId;
+    }
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/comment/modify/{commentId}")
+    public String commentModifyForm(Model model,
+                                    @PathVariable("commentId") Long commentId,
+                                    Principal principal) {
+
+        AsciiComment c = asciiService.getComment(commentId);
+
+        if (!c.getAuthor().getEmail().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 권한이 없습니다.");
+        }
+
+        model.addAttribute("comment", c);
+        model.addAttribute("asciiId", c.getAscii().getId());
+        return "comment_form";
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/comment/modify/{commentId}")
+    public String commentModify(@PathVariable("commentId") Long commentId,
+                                @RequestParam("content") String content,
+                                Principal principal) {
+
+        AsciiComment c = asciiService.getComment(commentId);
+        Integer asciiId = c.getAscii().getId();
+
+        if (content == null || content.trim().isEmpty()) {
+            return redirectAlert("댓글 내용을 입력해주세요.", "/ascii/detail/" + asciiId);
+        }
+
+        asciiService.modifyComment(commentId, principal.getName(), content);
+        return "redirect:/ascii/detail/" + asciiId;
+    }
+
 }
