@@ -8,6 +8,7 @@ import com.sbs.tutorial.app1.domain.member.entity.MemberRole;
 import exception.DataNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,13 +27,16 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final StringRedisTemplate redisTemplate;
-    private final Map<String, String> fakeRedisStorage; //로컬
+    private final Map<String, String> fakeRedisStorage; //로컬 로 연결하면서 5분 유효할수 없어서 주석처리함
+    private final ObjectProvider<Map<String, String>> fakeRedisStorageProvider; // 새로운 것으로 적용함
     private final EmailService emailService;
     private final AsciiRepository asciiRepository;
 
 //authcontroller에서 호출 받아서 authService.verifyCodeAndRegister(email, username, code) 정보를받아옴
     public void verifyCodeAndRegister(String email, String username, String inputCode) {
         String cleanEmail = email.trim();// 변수를 설정해 뛰어쓰기 하더라고 공백을 제거하고 입력받음
+
+        Map<String, String> fakeRedisStorage = fakeRedisStorageProvider.getIfAvailable();
 
         String savedCode = null;
 //savedCode 를 널로 설정하고 if문으로 가져옴
@@ -75,6 +79,9 @@ public class MemberService {
     }
     public Member logincode(String email, String inputCode) {//받은 아이디 코드를 가져옴
         String cleanEmail = email.trim();
+
+        Map<String, String> fakeRedisStorage = fakeRedisStorageProvider.getIfAvailable();
+
         Member member = memberRepository.findByEmail(cleanEmail) //맴버리포지터리에서 Optional<Member> findByEmail(String email); 로 있으면 Optional<Member> 없으면Optional<> 로 가져옴
                 .orElseThrow(() -> new RuntimeException("없는 이메일입니다"));
             //orElseThrow 는 Optional<>의 메서드 이다
@@ -179,6 +186,8 @@ public class MemberService {
     @Transactional
     public void withdraw(String email, String inputCode) {
         String cleanEmail = email.trim();
+
+        Map<String, String> fakeRedisStorage = fakeRedisStorageProvider.getIfAvailable();
 
         Member member = memberRepository.findByEmail(cleanEmail)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "회원 정보를 찾을 수 없습니다."));

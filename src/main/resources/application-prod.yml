@@ -13,14 +13,19 @@ spring:
     password: ${custom.prod.mail.password}
     properties:
       mail:
-        auth: true
-        starttls:
-          enable: true
-          required: true
+        smtp:
+          auth: true
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
-      auth-code-expiration-millis: 600000
+          starttls:
+            enable: true
+            required: true
+          # 커넥션 풀: 매번 TLS 핸드셰이크 비용 줄여 평균 지연 완화될 때 있다함
+          connectionpool: true
+          connectionpoolsize: 5
+          quitwait: false
+
   jpa:
     hibernate:
       ddl-auto: update
