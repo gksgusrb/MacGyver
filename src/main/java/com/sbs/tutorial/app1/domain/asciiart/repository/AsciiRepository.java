@@ -2,6 +2,8 @@ package com.sbs.tutorial.app1.domain.asciiart.repository;
 
 import com.sbs.tutorial.app1.domain.asciiart.entity.Ascii;
 import com.sbs.tutorial.app1.domain.member.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -16,6 +18,8 @@ public interface AsciiRepository extends JpaRepository<Ascii, Integer>, JpaSpeci
 
     // 다른사람이 모든사람의 작품을 보기 공개만
     List<Ascii> findByIsPublicTrueOrderByCreateDateDesc();
+
+    Page<Ascii> findByLikedMembersContaining(Member member, Pageable pageable);
 
 
 

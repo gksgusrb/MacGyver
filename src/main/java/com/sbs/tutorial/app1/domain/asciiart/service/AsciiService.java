@@ -56,6 +56,14 @@ public class AsciiService {
         return (root, query, cb) -> cb.equal(root.get("owner"), owner);
     }
 
+    private Specification<Ascii> likedBy(Member member) {
+        return (root, query, cb) -> {
+            query.distinct(true);
+            Join<Ascii, Member> likes = root.join("likedMembers", JoinType.LEFT);
+            return cb.equal(likes, member);
+        };
+    }
+
     // ===== 페이징/검색/정렬 =====
     public Page<Ascii> getPublicList(int page, String kw, String sort, String dir) {
         Pageable pageable = buildPageable(page, sort, dir);
@@ -79,6 +87,16 @@ public class AsciiService {
         Pageable pageable = buildPageable(page, sort, dir);
 
         Specification<Ascii> spec = Specification.where(ownerIs(owner)).and(isPublicTrue());
+        if (kw != null && !kw.trim().isEmpty()) spec = spec.and(search(kw.trim()));
+
+        return asciiRepository.findAll(spec, pageable);
+    }
+
+    public Page<Ascii> getLikedPage(Member member, int page, String kw, String sort, String dir) {
+        Pageable pageable = buildPageable(page, sort, dir);
+
+        Specification<Ascii> visibilitySpec = Specification.where(isPublicTrue()).or(ownerIs(member));
+        Specification<Ascii> spec = Specification.where(likedBy(member)).and(visibilitySpec);
         if (kw != null && !kw.trim().isEmpty()) spec = spec.and(search(kw.trim()));
 
         return asciiRepository.findAll(spec, pageable);
@@ -127,6 +145,20 @@ public class AsciiService {
 
     public List<AsciiComment> getComments(Ascii ascii) {
         return asciiCommentRepository.findByAsciiOrderByCreateDateAsc(ascii);
+    }
+
+    @Transactional
+    public void toggleLike(Ascii ascii, Member member) {
+        if (ascii.getLikedMembers().contains(member)) {
+            ascii.getLikedMembers().remove(member);
+        } else {
+            ascii.getLikedMembers().add(member);
+        }
+        asciiRepository.save(ascii);
+    }
+
+    public boolean isLikedBy(Ascii ascii, Member member) {
+        return ascii.getLikedMembers().contains(member);
     }
     @Transactional
     public void addComment(Ascii ascii, Member me, String content) {

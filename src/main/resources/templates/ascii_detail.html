@@ -78,7 +78,28 @@
     text-decoration: underline;
   }
 
+    .like-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0 12px;
+  }
 
+  .like-button {
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    border-radius: 999px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .like-button.liked {
+    background: #ffe6ea;
+    border-color: #ff9fb2;
+    color: #c1122f;
+    font-weight: bold;
+  }
     </style>
 </head>
 <body>
@@ -89,6 +110,26 @@
     <a th:href="@{/ascii/list}">← 목록으로</a>
 
     <h1 th:text="${ascii.subject}">제목</h1>
+
+    <div class="like-row">
+        <form th:if="${myEmail != null}"
+              th:action="@{|/ascii/${ascii.id}/like|}"
+              method="post"
+              style="display:inline;">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button type="submit"
+                    class="like-button"
+                    th:classappend="${isLiked} ? ' liked' : ''"
+                    th:text="${isLiked} ? '❤️ 좋아요 취소' : '🤍 좋아요'">
+                🤍 좋아요
+            </button>
+        </form>
+        <span style="color:#666;" th:text="|좋아요 ${likeCount}개|">좋아요 0개</span>
+        <span th:if="${myEmail == null}" style="color:#666;">
+            좋아요를 누르려면 <a href="/login">로그인</a>이 필요합니다.
+        </span>
+    </div>
+
 
     <div th:if="${isOwner}">
         <a th:href="@{|/ascii/modify/${ascii.id}|}"

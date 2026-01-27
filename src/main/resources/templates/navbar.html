@@ -28,6 +28,7 @@
             <a href="/">🏠 홈</a>
             <a href="/ascii/list">🌍 전체 갤러리</a>
             <a href="/ascii/my" onclick="return goMyPage(event)">🙋 내 작품</a>
+            <a href="/ascii/likes" onclick="return goLikesPage(event)">❤️ 좋아요한 작품</a>
             <a id="drawerWithdrawLink" href="/withdraw" class="drawer-danger" style="display:none;">
                 🚨 회원 탈퇴
             </a>
@@ -215,7 +216,8 @@
           const allowed =
             (path === "/") ||
             (path === "/ascii/list") ||
-            (path === "/ascii/my");
+             (path === "/ascii/my") ||
+            (path === "/ascii/likes");
 
           const menuBtn = document.getElementById("menuBtn");
           const drawer = document.getElementById("drawer");
@@ -277,6 +279,27 @@
     }
 
     location.href = "/ascii/my";
+    return false;
+  } catch (err) {
+    location.href = "/login";
+    return false;
+  }
+  }
+        async function goLikesPage(e) {
+  e.preventDefault();
+
+  try {
+    const res = await fetch("/api/auth/me", {
+      method: "GET",
+      credentials: "include"
+    });
+
+    if (!res.ok) {
+      location.href = "/login";
+      return false;
+    }
+
+    location.href = "/ascii/likes";
     return false;
   } catch (err) {
     location.href = "/login";

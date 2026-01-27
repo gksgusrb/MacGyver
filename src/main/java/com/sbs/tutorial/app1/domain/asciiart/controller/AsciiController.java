@@ -61,11 +61,13 @@ public class AsciiController {
                          Principal principal) {
 
         Ascii ascii = asciiService.getAscii(id);
+        boolean isAuthenticated = principal != null && !"anonymousUser".equals(principal.getName());
+        Member me = isAuthenticated ? memberService.getMemberByEmail(principal.getName()) : null; // 2중검사
         //수정 삭제버튼 숨김처리
-        boolean isOwner = principal != null && ascii.getOwner().getEmail().equals(principal.getName());
+        boolean isOwner = isAuthenticated && ascii.getOwner().getEmail().equals(principal.getName());
         //비공개 작품일경우 소유자만
         if (!ascii.isPublic()) {
-            if (principal == null || !ascii.getOwner().getEmail().equals(principal.getName())) {
+            if (isAuthenticated || !ascii.getOwner().getEmail().equals(principal.getName())) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "열람 권한이 없습니다.");
             }
         }
@@ -73,7 +75,9 @@ public class AsciiController {
         model.addAttribute("ascii", ascii);
         model.addAttribute("isOwner", isOwner);//이렇게 하면 삭제 수정버튼을 권한에따라 보이게 또는 안보이게 할수 있음
         model.addAttribute("comments", asciiService.getComments(ascii));
-        model.addAttribute("myEmail", principal != null ? principal.getName() : null);
+        model.addAttribute("myEmail", isAuthenticated ? principal.getName() : null); // 로그인시에만 작동
+        model.addAttribute("likeCount", ascii.getLikedMembers().size()); // 좋아요 개수 표기하기 위해서
+        model.addAttribute("isLiked", me != null && asciiService.isLikedBy(ascii, me)); // 같은 걸 로그인한 사람 기준으로 다르게 렌더링하려고 넣음
         return "ascii_detail";
     }
     //작품작성 로그인 필요
@@ -203,6 +207,27 @@ public class AsciiController {
 
         return "ascii_mypage";
     }
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/likes")
+    public String likesPage(Model model,
+                            Principal principal,
+                            @RequestParam(value = "page", defaultValue = "0") int page,
+                            @RequestParam(value = "kw", defaultValue = "") String kw,
+                            @RequestParam(value = "sort", defaultValue = "createDate") String sort,
+                            @RequestParam(value = "dir", defaultValue = "desc") String dir) {
+
+        Member me = memberService.getMemberByEmail(principal.getName());
+        Page<Ascii> paging = asciiService.getLikedPage(me, page, kw, sort, dir);
+
+        model.addAttribute("paging", paging);
+        model.addAttribute("kw", kw);
+        model.addAttribute("sort", sort);
+        model.addAttribute("dir", dir);
+
+        return "ascii_likes";
+    }
+
+
     @GetMapping("/user/{memberId}")
     public String userPage(Model model,
                            @PathVariable("memberId") Long memberId,
@@ -228,6 +253,34 @@ public class AsciiController {
         model.addAttribute("isMyPage", isOwner);
 
         return "ascii_mypage";
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/like")
+    public String toggleLike(@PathVariable("id") Integer id,
+                             Principal principal,
+                             @RequestHeader(value = "Referer", required = false) String referer) {
+        Ascii ascii = asciiService.getAscii(id);
+
+        if (!ascii.isPublic() && !ascii.getOwner().getEmail().equals(principal.getName())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "좋아요 권한이 없습니다.");
+        }
+
+        Member me = memberService.getMemberByEmail(principal.getName());
+        asciiService.toggleLike(ascii, me);
+
+        if (referer != null) {
+            try {
+                URI uri = URI.create(referer);
+                String path = uri.getPath();
+                String query = uri.getQuery();
+
+                if (path != null && path.startsWith("/ascii")) {
+                    return "redirect:" + path + (query != null ? "?" + query : "");
+                }
+            } catch (Exception ignored) {}
+        }
+        return "redirect:/ascii/detail/" + id;
     }
 
     @PreAuthorize("isAuthenticated()")
